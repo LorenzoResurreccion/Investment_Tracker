@@ -1,7 +1,7 @@
 .stock-detail-panel {
   padding: 12px 16px 16px;
-  background-color: #fafbfc;
-  border-bottom: 1px solid #e0e0e0;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #333;
 }
 
 .stock-detail-loading {
@@ -12,18 +12,14 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .stock-detail-error {
   text-align: center;
   padding: 12px;
-  color: #d32f2f;
+  color: #ef5350;
 }
 
 .stock-detail-error p {
@@ -32,16 +28,16 @@
 
 .stock-detail-retry-btn {
   padding: 6px 14px;
-  border: 1px solid #d32f2f;
+  border: 1px solid #ef5350;
   border-radius: 4px;
   background: transparent;
-  color: #d32f2f;
+  color: #ef5350;
   cursor: pointer;
   font-size: 0.85rem;
 }
 
 .stock-detail-retry-btn:hover {
-  background-color: #fdecea;
+  background-color: #2a1a1a;
 }
 
 .stock-detail-message {
@@ -52,15 +48,15 @@
 }
 
 .stock-detail-message--success {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #a5d6a7;
+  background-color: #1b3d1b;
+  color: #66bb6a;
+  border: 1px solid #2e7d32;
 }
 
 .stock-detail-message--error {
-  background-color: #fdecea;
-  color: #d32f2f;
-  border: 1px solid #ef9a9a;
+  background-color: #3d1b1b;
+  color: #ef5350;
+  border: 1px solid #c62828;
 }
 
 .stock-detail-empty {
@@ -72,7 +68,7 @@
 
 .stock-detail-holding {
   padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #2a2a2a;
 }
 
 .stock-detail-holding:last-child {
@@ -96,15 +92,16 @@
 .stock-detail-platform {
   font-weight: 500;
   min-width: 100px;
+  color: #ddd;
 }
 
 .stock-detail-quantity {
-  color: #555;
+  color: #aaa;
   font-size: 0.9rem;
 }
 
 .stock-detail-date {
-  color: #888;
+  color: #666;
   font-size: 0.85rem;
 }
 
@@ -124,36 +121,35 @@
 }
 
 .stock-detail-btn--primary {
-  background-color: #1976d2;
+  background-color: #2563eb;
   color: #fff;
-  border-color: #1976d2;
+  border-color: #2563eb;
 }
 
 .stock-detail-btn--primary:hover {
-  background-color: #1565c0;
+  background-color: #1d4ed8;
 }
 
 .stock-detail-btn--secondary {
-  background-color: #fff;
-  color: #555;
-  border-color: #ccc;
+  background-color: #2a2a2a;
+  color: #ccc;
+  border-color: #444;
 }
 
 .stock-detail-btn--secondary:hover {
-  background-color: #f5f5f5;
+  background-color: #333;
 }
 
 .stock-detail-btn--danger {
-  background-color: #d32f2f;
+  background-color: #c62828;
   color: #fff;
-  border-color: #d32f2f;
+  border-color: #c62828;
 }
 
 .stock-detail-btn--danger:hover {
-  background-color: #c62828;
+  background-color: #b71c1c;
 }
 
-/* Edit form */
 .stock-detail-edit-form {
   display: flex;
   flex-direction: column;
@@ -171,20 +167,27 @@
   min-width: 70px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #555;
+  color: #aaa;
 }
 
 .stock-detail-edit-field input {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #444;
   border-radius: 4px;
   font-size: 0.9rem;
+  background: #1a1a1a;
+  color: #eee;
+}
+
+.stock-detail-edit-field input:focus {
+  outline: none;
+  border-color: #4e79a7;
 }
 
 .stock-detail-edit-field input:disabled {
-  background-color: #f0f0f0;
-  color: #888;
+  background-color: #222;
+  color: #666;
   cursor: not-allowed;
 }
 
@@ -192,7 +195,7 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  color: #d32f2f;
+  color: #ef5350;
   font-size: 0.85rem;
 }
 
@@ -206,7 +209,6 @@
   margin-top: 4px;
 }
 
-/* Delete confirmation */
 .stock-detail-confirm {
   padding: 8px 0;
 }
@@ -214,10 +216,11 @@
 .stock-detail-confirm p {
   margin: 0 0 8px;
   font-size: 0.9rem;
+  color: #ddd;
 }
 
 .stock-detail-delete-error {
-  color: #d32f2f;
+  color: #ef5350;
   font-size: 0.85rem;
 }
 
@@ -233,8 +236,8 @@
   margin-top: 12px;
   padding: 10px;
   background: transparent;
-  border: 1px dashed #666;
-  color: #ccc;
+  border: 1px dashed #555;
+  color: #aaa;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -249,9 +252,9 @@
 .stock-detail-add-form {
   margin-top: 12px;
   padding: 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #333;
   border-radius: 6px;
-  background: #f5f5f5;
+  background: #222;
 }
 
 .stock-detail-bottom-actions {

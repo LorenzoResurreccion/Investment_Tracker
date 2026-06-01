@@ -15,7 +15,7 @@ export default function PortfolioValueGraph({ dataPoints, currentTotal, loading 
         </div>
         <div className="portfolio-value-graph-chart">
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={[]}>
+            <LineChart width="100%" data={[]}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="time" label={{ value: 'Time', position: 'insideBottom', offset: -5 }} />
               <YAxis label={{ value: 'Value ($)', angle: -90, position: 'insideLeft' }} />
@@ -56,10 +56,10 @@ export default function PortfolioValueGraph({ dataPoints, currentTotal, loading 
       </div>
       <div className="portfolio-value-graph-chart">
         <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={dataPoints}>
+          <LineChart data={dataPoints} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" label={{ value: 'Time', position: 'insideBottom', offset: -5 }} />
-            <YAxis label={{ value: 'Value ($)', angle: -90, position: 'insideLeft' }} />
+            <XAxis dataKey="time" tick={{ fontSize: 16 }} />
+            <YAxis domain={['auto', 'auto']} tick={{ fontSize: 16 }} />
             <Tooltip formatter={(value) => formatCurrency(value)} />
             <Line type="monotone" dataKey="value" stroke="#4e79a7" dot={false} strokeWidth={2} />
           </LineChart>

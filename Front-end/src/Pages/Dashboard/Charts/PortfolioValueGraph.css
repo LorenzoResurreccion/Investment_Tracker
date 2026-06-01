@@ -14,13 +14,13 @@
 
 .portfolio-value-graph-label {
   font-size: 1rem;
-  color: #666;
+  color: #aaa;
 }
 
 .portfolio-value-graph-total {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #fff;
 }
 
 .portfolio-value-graph-loading-indicator {

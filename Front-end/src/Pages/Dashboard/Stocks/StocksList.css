@@ -1,21 +1,21 @@
 .stocks-list {
-  border: 1px solid #e0e0e0;
+  border: 1px solid #333;
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
+  background: #1e1e1e;
 }
 
 .stocks-list-empty {
   padding: 24px 16px;
   text-align: center;
-  color: #777;
+  color: #999;
   font-size: 0.95rem;
 }
 
 .stocks-list-error {
   padding: 24px 16px;
   text-align: center;
-  color: #d32f2f;
+  color: #ef5350;
   font-size: 0.95rem;
 }
 
@@ -24,7 +24,7 @@
 }
 
 .stocks-list-item {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #333;
 }
 
 .stocks-list-item:last-child {
