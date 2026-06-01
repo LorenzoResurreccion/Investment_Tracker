@@ -73,6 +73,12 @@
   .dashboard__charts {
     flex-direction: column;
   }
+
+  .dashboard__pie-chart,
+  .dashboard__graph {
+    width: 100%;
+    flex: none;
+  }
 }
 
 .dashboard__add-stock,
