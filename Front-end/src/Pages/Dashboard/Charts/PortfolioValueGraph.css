@@ -1,0 +1,36 @@
+.portfolio-value-graph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+}
+
+.portfolio-value-graph-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.portfolio-value-graph-label {
+  font-size: 1rem;
+  color: #666;
+}
+
+.portfolio-value-graph-total {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.portfolio-value-graph-loading-indicator {
+  font-size: 1rem;
+  color: #999;
+  font-style: italic;
+}
+
+.portfolio-value-graph-chart {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

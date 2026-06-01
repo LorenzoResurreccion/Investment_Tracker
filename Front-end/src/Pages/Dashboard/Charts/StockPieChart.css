@@ -1,0 +1,46 @@
+.stock-pie-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 0;
+  width: 100%;
+  min-height: 350px;
+}
+
+.stock-pie-chart--empty {
+  min-height: 200px;
+}
+
+.stock-pie-chart-empty-message {
+  color: #ccc;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.pie-chart-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.pie-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.pie-chart-legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.pie-chart-legend-label {
+  color: #fff;
+}

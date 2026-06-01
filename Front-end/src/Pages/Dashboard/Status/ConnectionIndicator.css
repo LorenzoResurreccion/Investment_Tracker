@@ -1,0 +1,43 @@
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.connection-indicator--reconnecting {
+  background-color: #fff3cd;
+  color: #664d03;
+  border: 1px solid #ffecb5;
+}
+
+.connection-indicator--failed {
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+.connection-indicator__icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+
+.connection-indicator--reconnecting .connection-indicator__icon {
+  animation: spin 1.5s linear infinite;
+}
+
+.connection-indicator__message {
+  flex: 1;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
