@@ -21,7 +21,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * PriceBroadcaster iterates over getSessions() to broadcast
  * price updates to all connected clients.
  *
- * Requirements: 4.3, 4.4, 4.5, 9.3
+ * On connect, if the market is closed, sends quote snapshots for all
+ * subscribed symbols via MarketQuoteService.
  */
 @Component
 @ServerEndpoint(value = "/ws/prices")
@@ -31,21 +32,17 @@ public class PriceWebSocketEndpoint {
 
     private static final CopyOnWriteArraySet<Session> sessions = new CopyOnWriteArraySet<>();
 
-    /**
-     * Returns an unmodifiable view of the currently active WebSocket sessions.
-     *
-     * @return set of open sessions
-     */
+    // Static reference to MarketQuoteService, set by WebSocketLifecycleConfig on startup
+    private static volatile MarketQuoteService marketQuoteService;
+
+    public static void setMarketQuoteService(MarketQuoteService service) {
+        marketQuoteService = service;
+    }
+
     public static Set<Session> getSessions() {
         return Collections.unmodifiableSet(sessions);
     }
 
-    /**
-     * Removes a session from the active session set. Used by
-     * {@code PriceBroadcaster} when a send failure occurs.
-     *
-     * @param session the session to remove
-     */
     public static void removeSession(Session session) {
         sessions.remove(session);
     }
@@ -54,6 +51,11 @@ public class PriceWebSocketEndpoint {
     public void onOpen(Session session) {
         sessions.add(session);
         logger.info("WebSocket session opened: sessionId={}", session.getId());
+
+        // Send quote snapshots if market is closed
+        if (marketQuoteService != null) {
+            marketQuoteService.onClientConnected(session);
+        }
     }
 
     @OnClose
