@@ -4,11 +4,12 @@ A personal investment dashboard that consolidates stocks and crypto holdings in 
 
 ## Features
 
-- **Real-time portfolio dashboard** — pie chart showing asset allocation, live portfolio value graph, and scrollable holdings list
-- **Live price streaming** — WebSocket connection to receive real-time price updates with automatic reconnection and exponential backoff
+- **Real-time portfolio dashboard** — pie chart showing asset allocation by quantity, live portfolio value graph, and scrollable holdings list displayed side by side (responsive — stacks on small screens)
+- **Live price streaming** — WebSocket connection to Finnhub for real-time price updates with automatic reconnection and exponential backoff
 - **Full CRUD** — add, edit, and delete individual investment holdings
-- **Per-platform breakdown** — expand any stock row to see holdings grouped by platform (Robinhood, Coinbase, etc.)
-- **Symbol search** — debounced search when adding new investments
+- **Per-platform breakdown** — expand any stock row to see holdings grouped by platform, with a single "Edit Holdings" button that enables inline editing, deletion, and adding new holdings for that symbol
+- **Multi-asset symbol search** — search US stocks, ETFs, or crypto (Binance) when adding investments via a type selector
+- **Responsive layout** — pie chart and graph sit side by side on wide screens, stack vertically on narrow screens
 - **Responsive loading states** — skeleton UI on initial load, connection indicators for WebSocket status
 
 ## Architecture
@@ -27,7 +28,7 @@ React 19 single-page application built with Vite 8. Uses the React Compiler for 
 **Key technologies:**
 - React 19 with JSX (no TypeScript)
 - Vite 8 with React Compiler (babel-plugin-react-compiler)
-- Recharts 3.x for pie chart and line chart visualizations
+- Recharts 2.x for pie chart and line chart visualizations
 - Vitest + Testing Library for unit tests
 - fast-check for property-based tests
 
@@ -67,10 +68,10 @@ Spring Boot application providing REST APIs and real-time price streaming.
 
 **Modules:**
 - `investment/` — CRUD endpoints for user holdings (`/api/investments`)
-- `symbol/` — Symbol search endpoint (`/api/symbols/search`)
-- `finnhub/` — Finnhub WebSocket client with reconnect scheduling
+- `symbol/` — Symbol search endpoint (`/api/symbols/search`) with support for stocks, ETFs, and crypto
+- `finnhub/` — Finnhub WebSocket client with reconnect scheduling (created via `FinnhubConfig`, not `@Component`)
 - `websocket/` — Server-side WebSocket for pushing prices to clients + PriceBroadcaster
-- `config/` — CORS, WebSocket, and request logging configuration
+- `config/` — CORS, WebSocket, Finnhub, and request logging configuration
 
 **REST API endpoints:**
 | Method | Endpoint | Description |
@@ -80,7 +81,7 @@ Spring Boot application providing REST APIs and real-time price streaming.
 | POST | `/api/investments` | Create a new holding |
 | PUT | `/api/investments/{id}` | Update a holding (quantity, platform) |
 | DELETE | `/api/investments/{id}` | Delete a holding |
-| GET | `/api/symbols/search?q=...` | Search available symbols |
+| GET | `/api/symbols/search?q=...&type=...` | Search symbols (type: stock, crypto, etf) |
 
 **WebSocket endpoint:**
 | Endpoint | Direction | Message |
@@ -93,7 +94,8 @@ You need three things running: PostgreSQL, the Spring Boot back-end, and the Rea
 
 ### Prerequisites
 
-- Java 17+ (for the back-end)
+- Java 21+ (for the back-end)
+- Maven 3.9+ (for building the back-end)
 - Node.js 18+ (for the front-end)
 - Homebrew (for PostgreSQL)
 - A free [Finnhub API key](https://finnhub.io/)
@@ -128,12 +130,13 @@ export DATABASE_URL=jdbc:postgresql://localhost:5432/investment_tracker
 export DATABASE_USERNAME=$(whoami)
 export DATABASE_PASSWORD=
 
-mvn spring-boot:run
+mvn package -DskipTests -q
+java -Xmx256m -jar target/investment-tracker-0.0.1-SNAPSHOT.jar
 ```
 
 Starts on `http://localhost:8080`. Flyway automatically creates the database schema on first run.
 
-Note: Homebrew Postgres uses your macOS username with no password by default (peer authentication).
+Note: Running the JAR directly (instead of `mvn spring-boot:run`) uses less memory. Homebrew Postgres uses your macOS username with no password by default (peer authentication).
 
 ### 4. Front-end
 
@@ -165,11 +168,14 @@ brew services start postgresql@16
 | Variable | Example | Required |
 |----------|---------|----------|
 | `FINNHUB_API_KEY` | `csXXXXXXXXXXXXXX` | Yes |
+| `FINNHUB_ENABLED` | `true` | No (defaults to true) |
 | `DATABASE_URL` | `jdbc:postgresql://localhost:5432/investment_tracker` | Yes |
 | `DATABASE_USERNAME` | your macOS username | Yes |
 | `DATABASE_PASSWORD` | (empty for Homebrew Postgres) | Yes |
 | `SERVER_PORT` | `8080` | No (defaults to 8080) |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | No (defaults to this) |
+
+Set `FINNHUB_ENABLED=false` to run the back-end without connecting to Finnhub (useful for testing REST endpoints without live market data).
 
 ### Available Scripts (Front-end)
 
@@ -210,7 +216,10 @@ npm test
 
 - **No global state library** — React state + props are sufficient for a single-page, single-user app
 - **React Compiler** — handles memoization automatically, no manual `useMemo`/`useCallback`
-- **Recharts** — declarative SVG-based charting, React 19 compatible, ~45kB gzipped
+- **Recharts 2.x** — declarative SVG-based charting, React 19 compatible
 - **Co-located CSS** — each component has its own `.css` file alongside it
 - **Summary-only fetch on mount** — full holdings are only fetched when a stock row is expanded
 - **Single WebSocket connection** — owned by Dashboard, price map shared via props to children
+- **No Kafka** — removed for simplicity; Finnhub prices are broadcast directly to browser WebSocket clients via `PriceBroadcaster`. Kafka can be re-introduced for multi-user scaling (see `docs/future-features.md`)
+- **FinnhubClient as @Bean** — created via `FinnhubConfig` (not `@Component`) to avoid CGLIB proxy issues with the `WebSocketClient` superclass
+- **Pie chart by quantity** — shows allocation by share count rather than dollar value, so it works without live price data
