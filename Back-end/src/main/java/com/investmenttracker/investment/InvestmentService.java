@@ -9,7 +9,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Business logic for Investment CRUD operations and symbol subscription management.
@@ -71,6 +75,7 @@ public class InvestmentService {
         investment.setSymbol(request.getSymbol());
         investment.setQuantity(request.getQuantity());
         investment.setPlatform(request.getPlatform());
+        investment.setAverageCost(request.getAverageCost());
 
         Investment saved = investmentRepository.save(investment);
 
@@ -101,21 +106,56 @@ public class InvestmentService {
      * Returns a portfolio summary with holdings aggregated by symbol.
      *
      * Each entry contains the symbol, total quantity across all platforms,
-     * and the number of individual holdings for that symbol. This avoids
-     * sending potentially hundreds of raw rows to the front-end for display
-     * on the main portfolio dashboard.
+     * the number of individual holdings for that symbol, and a weighted average
+     * cost computed from holdings with non-null averageCost. Results are sorted
+     * alphabetically by symbol.
      *
      * @return list of {@link PortfolioSummaryResponse} entries, one per distinct symbol
      */
     @Transactional(readOnly = true)
     public List<PortfolioSummaryResponse> getPortfolioSummary() {
-        return investmentRepository.findPortfolioSummary().stream()
-                .map(row -> new PortfolioSummaryResponse(
-                        (String) row[0],
-                        (java.math.BigDecimal) row[1],
-                        (Long) row[2]
-                ))
+        List<Investment> all = investmentRepository.findAll();
+        Map<String, List<Investment>> bySymbol = all.stream()
+                .collect(Collectors.groupingBy(Investment::getSymbol));
+
+        return bySymbol.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> {
+                    String symbol = entry.getKey();
+                    List<Investment> holdings = entry.getValue();
+                    BigDecimal totalQty = holdings.stream()
+                            .map(Investment::getQuantity)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal weightedAvgCost = computeWeightedAverageCost(holdings);
+                    return new PortfolioSummaryResponse(symbol, totalQty, holdings.size(), weightedAvgCost);
+                })
                 .toList();
+    }
+
+    /**
+     * Computes the weighted average cost for a list of holdings.
+     *
+     * Only holdings with a non-null averageCost are included. The formula is:
+     * SUM(averageCost × quantity) / SUM(quantity) for those holdings,
+     * rounded to 8 decimal places using HALF_UP rounding.
+     *
+     * @param holdings the list of investments for a single symbol
+     * @return the weighted average cost, or null if no holdings have a non-null averageCost
+     *         or the sum of their quantities is zero
+     */
+    private BigDecimal computeWeightedAverageCost(List<Investment> holdings) {
+        BigDecimal numerator = BigDecimal.ZERO;
+        BigDecimal denominator = BigDecimal.ZERO;
+        for (Investment h : holdings) {
+            if (h.getAverageCost() != null) {
+                numerator = numerator.add(h.getAverageCost().multiply(h.getQuantity()));
+                denominator = denominator.add(h.getQuantity());
+            }
+        }
+        if (denominator.compareTo(BigDecimal.ZERO) == 0) {
+            return null;
+        }
+        return numerator.divide(denominator, 8, RoundingMode.HALF_UP);
     }
 
     /**
@@ -162,6 +202,9 @@ public class InvestmentService {
         }
         if (request.getPlatform() != null) {
             existing.setPlatform(request.getPlatform());
+        }
+        if (request.isAverageCostProvided()) {
+            existing.setAverageCost(request.getAverageCost());
         }
 
         Investment updated = investmentRepository.save(existing);

@@ -74,6 +74,33 @@ export function computePieSlices(summary, priceMap) {
 }
 
 /**
+ * Computes profit/loss for a single holding.
+ * Returns null if averageCost or price is unavailable.
+ * Requirement 3.3, 5.1
+ */
+export function computeProfitLoss(quantity, currentPrice, averageCost) {
+  if (currentPrice == null || averageCost == null) return null;
+  return (currentPrice - averageCost) * quantity;
+}
+
+/**
+ * Computes total portfolio profit/loss across all holdings.
+ * Excludes holdings where weightedAverageCost or price is null.
+ * Requirements 4.3, 5.2
+ */
+export function computeTotalProfitLoss(summary, priceMap) {
+  if (!summary || !priceMap) return 0;
+  let total = 0;
+  for (const item of summary) {
+    const price = priceMap[item.symbol];
+    if (price != null && item.weightedAverageCost != null) {
+      total += (price - item.weightedAverageCost) * item.totalQuantity;
+    }
+  }
+  return total;
+}
+
+/**
  * Appends a data point to the buffer, evicting the oldest if over maxPoints.
  * Requirement 3.3
  */
@@ -94,11 +121,55 @@ export function computeBackoffDelay(attempt) {
 }
 
 /**
+ * Validates the average cost input value.
+ * Returns an error string if invalid, or null if valid.
+ * The field is optional — empty/null/undefined values are allowed.
+ * Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
+ */
+export function validateAverageCost(value) {
+  // Field is optional — empty values are valid (req 6.5)
+  if (value == null || value === '') return null;
+
+  const str = String(value).trim();
+  if (str === '') return null;
+
+  // Check for non-numeric input (req 6.6)
+  const num = Number(str);
+  if (!Number.isFinite(num)) {
+    return 'Average cost must be a valid number';
+  }
+
+  // Check for non-numeric characters that Number() might coerce (e.g. "1e2" is fine as numeric)
+  // But multiple decimals, letters, special chars should be caught by Number() above
+
+  // Check for zero or negative values (req 6.4)
+  if (num <= 0) {
+    return 'Average cost must be greater than zero';
+  }
+
+  // Check for more than 8 decimal places (req 6.2)
+  if (str.includes('.')) {
+    const decimalPart = str.split('.')[1];
+    if (decimalPart && decimalPart.length > 8) {
+      return 'Average cost must have at most 8 decimal places';
+    }
+  }
+
+  // Check for value exceeding maximum (req 6.3)
+  // The max allowed value is 999999999.99999999; any value >= 1e9 exceeds it
+  if (num >= 1e9) {
+    return 'Average cost must not exceed 999,999,999.99999999';
+  }
+
+  return null;
+}
+
+/**
  * Validates the investment form fields.
  * Returns an array of error messages (empty if valid).
  * Requirements 5.5, 6.5, 8.3
  */
-export function validateInvestmentForm({ symbol, quantity, platform }) {
+export function validateInvestmentForm({ symbol, quantity, platform, averageCost }) {
   const errors = [];
 
   // Symbol validation
@@ -117,6 +188,12 @@ export function validateInvestmentForm({ symbol, quantity, platform }) {
   // Platform validation (optional, but if provided must be ≤100 chars)
   if (platform && platform.length > 100) {
     errors.push('Platform must not exceed 100 characters');
+  }
+
+  // Average cost validation (optional field)
+  const avgCostError = validateAverageCost(averageCost);
+  if (avgCostError) {
+    errors.push(avgCostError);
   }
 
   return errors;

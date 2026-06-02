@@ -35,6 +35,10 @@ public class Investment {
     @Column(name = "platform", length = 100)
     private String platform;
 
+    /** Average cost per share (cost basis). Null when unknown. */
+    @Column(name = "average_cost", precision = 18, scale = 8)
+    private BigDecimal averageCost;
+
     @Column(name = "created_at", nullable = false, updatable = false,
             columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime createdAt;
@@ -77,6 +81,14 @@ public class Investment {
 
     public void setPlatform(String platform) {
         this.platform = platform;
+    }
+
+    public BigDecimal getAverageCost() {
+        return averageCost;
+    }
+
+    public void setAverageCost(BigDecimal averageCost) {
+        this.averageCost = averageCost;
     }
 
     public OffsetDateTime getCreatedAt() {

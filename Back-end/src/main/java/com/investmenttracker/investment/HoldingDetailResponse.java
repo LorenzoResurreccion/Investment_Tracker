@@ -14,6 +14,7 @@ public record HoldingDetailResponse(
         Long id,
         BigDecimal quantity,
         String platform,
+        BigDecimal averageCost,
         OffsetDateTime createdAt
 ) {
 
@@ -29,6 +30,7 @@ public record HoldingDetailResponse(
                 investment.getId(),
                 investment.getQuantity(),
                 investment.getPlatform(),
+                investment.getAverageCost(),
                 investment.getCreatedAt()
         );
     }

@@ -15,6 +15,7 @@ public record InvestmentResponse(
         String symbol,
         BigDecimal quantity,
         String platform,
+        BigDecimal averageCost,
         OffsetDateTime createdAt
 ) {
 
@@ -30,6 +31,7 @@ public record InvestmentResponse(
                 investment.getSymbol(),
                 investment.getQuantity(),
                 investment.getPlatform(),
+                investment.getAverageCost(),
                 investment.getCreatedAt()
         );
     }

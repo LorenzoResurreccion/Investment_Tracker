@@ -1,5 +1,7 @@
 package com.investmenttracker.investment;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -16,7 +18,10 @@ import java.math.BigDecimal;
  * For PUT (partial update), @Valid is not applied on the controller
  * endpoint, so null fields are accepted and the service layer handles partial updates.
  *
- * Requirements: 7.2, 7.3, 7.6
+ * The averageCost field uses a sentinel pattern (averageCostProvided flag) to distinguish
+ * between "field not sent" (don't update) and "field sent as null" (clear the value) on PUT.
+ *
+ * Requirements: 7.2, 7.3, 7.6, 1.6, 1.7
  */
 public class InvestmentRequest {
 
@@ -32,6 +37,12 @@ public class InvestmentRequest {
 
     @Size(max = 100, message = "platform must not exceed 100 characters")
     private String platform;
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "averageCost must be zero or greater")
+    @Digits(integer = 18, fraction = 8, message = "averageCost must have at most 18 integer digits and 8 decimal places")
+    private BigDecimal averageCost;
+
+    private boolean averageCostProvided = false;
 
     public InvestmentRequest() {
     }
@@ -64,5 +75,20 @@ public class InvestmentRequest {
 
     public void setPlatform(String platform) {
         this.platform = platform;
+    }
+
+    public BigDecimal getAverageCost() {
+        return averageCost;
+    }
+
+    @JsonSetter("averageCost")
+    public void setAverageCost(BigDecimal averageCost) {
+        this.averageCost = averageCost;
+        this.averageCostProvided = true;
+    }
+
+    @JsonIgnore
+    public boolean isAverageCostProvided() {
+        return averageCostProvided;
     }
 }

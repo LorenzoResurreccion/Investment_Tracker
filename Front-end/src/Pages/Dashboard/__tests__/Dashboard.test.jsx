@@ -254,8 +254,8 @@ describe('Dashboard', () => {
         mockWsOnMessage({ symbol: 'AAPL', price: 150.25, timestamp: '2024-01-15T14:30:00.123Z' });
       });
 
-      const pieChart = screen.getByTestId('stock-pie-chart');
-      const priceMap = JSON.parse(pieChart.getAttribute('data-pricemap'));
+      const stocksList = screen.getByTestId('stocks-list');
+      const priceMap = JSON.parse(stocksList.getAttribute('data-pricemap'));
       expect(priceMap).toEqual({ AAPL: 150.25 });
     });
 
