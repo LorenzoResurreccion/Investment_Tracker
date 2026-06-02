@@ -9,7 +9,6 @@ import './AddStockForm.css';
 const INVESTMENT_TYPES = [
   { value: 'stock', label: 'US Stock' },
   { value: 'crypto', label: 'Crypto' },
-  { value: 'etf', label: 'ETF' },
 ];
 
 function AddStockFormInner({ onClose, onCreated }) {
