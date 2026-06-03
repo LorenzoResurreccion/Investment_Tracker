@@ -105,6 +105,11 @@
   font-size: 0.85rem;
 }
 
+.stock-detail-avg-cost {
+  color: #7c9cbf;
+  font-size: 0.85rem;
+}
+
 .stock-detail-holding-actions {
   display: flex;
   gap: 8px;

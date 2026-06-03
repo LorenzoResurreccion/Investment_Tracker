@@ -76,10 +76,10 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!-- .env file support -->
+        <!-- .env file support (auto-loads Back-end/.env into Spring Environment) -->
         <dependency>
             <groupId>me.paulschwarz</groupId>
-            <artifactId>spring-dotenv</artifactId>
+            <artifactId>springboot3-dotenv</artifactId>
             <version>5.1.0</version>
         </dependency>
 

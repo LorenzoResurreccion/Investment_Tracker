@@ -1,6 +1,6 @@
 import { useState, useEffect, useReducer, useRef } from 'react';
 import useApi from '../../../hooks/useApi.js';
-import { displayPlatform, validateInvestmentForm } from '../utils.js';
+import { displayPlatform, validateInvestmentForm, validateAverageCost, formatCurrency } from '../utils.js';
 import './StockDetailPanel.css';
 
 function fetchReducer(state, action) {
@@ -31,7 +31,7 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
   const [message, setMessage] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [addingNew, setAddingNew] = useState(false);
-  const [addForm, setAddForm] = useState({ quantity: '', platform: '' });
+  const [addForm, setAddForm] = useState({ quantity: '', platform: '', averageCost: '' });
   const [addErrors, setAddErrors] = useState([]);
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const abortRef = useRef(false);
@@ -72,7 +72,11 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
     // Pre-fill edit forms for all holdings
     const forms = {};
     for (const h of state.holdings) {
-      forms[h.id] = { quantity: String(h.quantity), platform: h.platform || '' };
+      forms[h.id] = {
+        quantity: String(h.quantity),
+        platform: h.platform || '',
+        averageCost: h.averageCost != null ? String(h.averageCost) : '',
+      };
     }
     setEditForms(forms);
     setEditErrors({});
@@ -117,7 +121,7 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
 
   function startAddHolding() {
     setAddingNew(true);
-    setAddForm({ quantity: '', platform: '' });
+    setAddForm({ quantity: '', platform: '', averageCost: '' });
     setAddErrors([]);
   }
 
@@ -132,6 +136,12 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
       quantity: addForm.quantity,
       platform: addForm.platform,
     });
+
+    const avgCostError = validateAverageCost(addForm.averageCost);
+    if (avgCostError) {
+      errors.push(avgCostError);
+    }
+
     if (errors.length > 0) {
       setAddErrors(errors);
       return;
@@ -143,6 +153,7 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
         symbol,
         quantity: Number(addForm.quantity),
         platform: addForm.platform || null,
+        averageCost: addForm.averageCost ? Number(addForm.averageCost) : null,
       })
       .then((result) => {
         if (result.error) {
@@ -158,6 +169,7 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
             [result.data.id]: {
               quantity: String(result.data.quantity),
               platform: result.data.platform || '',
+              averageCost: result.data.averageCost != null ? String(result.data.averageCost) : '',
             },
           }));
           setAddingNew(false);
@@ -178,25 +190,41 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
 
       const qtyChanged = Number(form.quantity) !== holding.quantity;
       const platChanged = (form.platform || '') !== (holding.platform || '');
+      const currentAvgCost = holding.averageCost != null ? String(holding.averageCost) : '';
+      const avgCostChanged = (form.averageCost || '') !== currentAvgCost;
 
-      if (!qtyChanged && !platChanged) continue;
+      if (!qtyChanged && !platChanged && !avgCostChanged) continue;
 
       const errors = validateInvestmentForm({
         symbol,
         quantity: form.quantity,
         platform: form.platform,
       });
+
+      // Validate averageCost if provided
+      const avgCostError = validateAverageCost(form.averageCost);
+      if (avgCostError) {
+        errors.push(avgCostError);
+      }
+
       if (errors.length > 0) {
         newErrors[holding.id] = errors;
         hasError = true;
         continue;
       }
 
-      const result = await api.put(`/investments/${holding.id}`, {
+      const body = {
         symbol,
         quantity: Number(form.quantity),
         platform: form.platform || null,
-      });
+      };
+
+      // Include averageCost in the request (supports clearing via null)
+      if (avgCostChanged) {
+        body.averageCost = form.averageCost ? Number(form.averageCost) : null;
+      }
+
+      const result = await api.put(`/investments/${holding.id}`, body);
 
       if (result.error) {
         newErrors[holding.id] = [result.error];
@@ -206,7 +234,7 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
           type: 'update',
           holdings: state.holdings.map((h) =>
             h.id === holding.id
-              ? { ...h, quantity: result.data.quantity, platform: result.data.platform }
+              ? { ...h, quantity: result.data.quantity, platform: result.data.platform, averageCost: result.data.averageCost }
               : h
           ),
         });
@@ -307,6 +335,14 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
                   maxLength={100}
                   placeholder="Platform"
                 />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="stock-detail-input"
+                  value={editForms[holding.id]?.averageCost ?? ''}
+                  onChange={(e) => handleFieldChange(holding.id, 'averageCost', e.target.value)}
+                  placeholder="Avg Cost"
+                />
                 <button
                   className="stock-detail-btn stock-detail-btn--danger stock-detail-btn--small"
                   onClick={() => confirmDelete(holding.id)}
@@ -332,6 +368,11 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
                 <span className="stock-detail-quantity">
                   Qty: {holding.quantity}
                 </span>
+                {holding.averageCost != null && (
+                  <span className="stock-detail-avg-cost">
+                    Avg: {formatCurrency(holding.averageCost)}
+                  </span>
+                )}
                 <span className="stock-detail-date">
                   {new Date(holding.createdAt).toLocaleDateString()}
                 </span>
@@ -366,6 +407,16 @@ export default function StockDetailPanel({ symbol, onHoldingChanged }) {
               }
               maxLength={100}
               placeholder="Platform"
+            />
+            <input
+              type="text"
+              inputMode="decimal"
+              className="stock-detail-input"
+              value={addForm.averageCost}
+              onChange={(e) =>
+                setAddForm((prev) => ({ ...prev, averageCost: e.target.value }))
+              }
+              placeholder="Avg Cost"
             />
           </div>
           {addErrors.length > 0 && (
