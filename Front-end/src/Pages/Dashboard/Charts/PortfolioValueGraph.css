@@ -7,7 +7,7 @@
 
 .portfolio-value-graph-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }

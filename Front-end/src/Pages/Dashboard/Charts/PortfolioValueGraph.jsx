@@ -12,7 +12,7 @@ export default function PortfolioValueGraph({ dataPoints, currentTotal, loading,
     return (
       <div className="portfolio-value-graph">
         <div className="portfolio-value-graph-header">
-          <span className="portfolio-value-graph-label">Portfolio Value</span>
+          <span className="portfolio-value-graph-label"></span>
           <DisplayModeToggle mode={displayMode} onChange={onDisplayModeChange} />
           <span className="portfolio-value-graph-total">$0.00</span>
         </div>
@@ -34,7 +34,7 @@ export default function PortfolioValueGraph({ dataPoints, currentTotal, loading,
     return (
       <div className="portfolio-value-graph">
         <div className="portfolio-value-graph-header">
-          <span className="portfolio-value-graph-label">Portfolio Value</span>
+          <span className="portfolio-value-graph-label"></span>
           <DisplayModeToggle mode={displayMode} onChange={onDisplayModeChange} />
           <span className="portfolio-value-graph-loading-indicator">Loading…</span>
         </div>
@@ -55,7 +55,7 @@ export default function PortfolioValueGraph({ dataPoints, currentTotal, loading,
   return (
     <div className="portfolio-value-graph">
       <div className="portfolio-value-graph-header">
-        <span className="portfolio-value-graph-label">Portfolio Value</span>
+        <span className="portfolio-value-graph-label"></span>
         <DisplayModeToggle mode={displayMode} onChange={onDisplayModeChange} />
         <span className="portfolio-value-graph-total">{formattedTotal}</span>
       </div>
