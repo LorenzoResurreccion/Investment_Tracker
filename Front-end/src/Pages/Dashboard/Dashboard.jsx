@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import useApi from '../../hooks/useApi.js';
 import useWebSocket from '../../hooks/useWebSocket.js';
-import { computeTotalValue, appendDataPoint } from './utils.js';
+import { computeTotalValue, computeTotalProfitLoss, appendDataPoint } from './utils.js';
 import StockPieChart from './Charts/StockPieChart.jsx';
 import PortfolioValueGraph from './Charts/PortfolioValueGraph.jsx';
 import StocksList from './Stocks/StocksList.jsx';
@@ -11,11 +11,12 @@ import ConnectionIndicator from './Status/ConnectionIndicator.jsx';
 import DashboardSkeleton from './Status/DashboardSkeleton.jsx';
 import './Dashboard.css';
 
-const WS_URL = import.meta.env.DEV
-  ? 'ws://localhost:8080/ws/prices'
-  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/prices`;
+const WS_URL = import.meta.env.VITE_WS_URL
+  || (import.meta.env.DEV
+    ? 'ws://localhost:8080/ws/prices'
+    : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/prices`);
 const FETCH_TIMEOUT_MS = 10000;
-const MAX_DATA_POINTS = 200;
+const MAX_DATA_POINTS = 50;
 
 export default function Dashboard() {
   const api = useApi();
@@ -27,10 +28,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addFormOpen, setAddFormOpen] = useState(false);
+  const [graphDisplayMode, setGraphDisplayMode] = useState('totalValue');
 
   // Refs to keep latest state accessible in callbacks without re-triggering effects
   const summaryRef = useRef(summary);
   const priceMapRef = useRef(priceMap);
+  const graphDisplayModeRef = useRef(graphDisplayMode);
 
   useEffect(() => {
     summaryRef.current = summary;
@@ -40,6 +43,15 @@ export default function Dashboard() {
     priceMapRef.current = priceMap;
   }, [priceMap]);
 
+  useEffect(() => {
+    graphDisplayModeRef.current = graphDisplayMode;
+  }, [graphDisplayMode]);
+
+  // Clear data points when display mode changes
+  useEffect(() => {
+    setDataPoints([]);
+  }, [graphDisplayMode]);
+
   // WebSocket message handler
   function handlePriceUpdate(message) {
     if (!message || !message.symbol || message.price == null) return;
@@ -48,15 +60,22 @@ export default function Dashboard() {
 
     setPriceMap((prev) => ({ ...prev, [symbol]: price }));
 
-    // Compute new total using updated price map
+    // Compute new data point using updated price map
     const updatedPriceMap = { ...priceMapRef.current, [symbol]: price };
-    const newTotal = computeTotalValue(summaryRef.current, updatedPriceMap);
+    const currentMode = graphDisplayModeRef.current;
+
+    let newValue;
+    if (currentMode === 'profitLoss') {
+      newValue = computeTotalProfitLoss(summaryRef.current, updatedPriceMap);
+    } else {
+      newValue = computeTotalValue(summaryRef.current, updatedPriceMap);
+    }
 
     const timeLabel = timestamp
       ? new Date(timestamp).toLocaleTimeString()
       : new Date().toLocaleTimeString();
 
-    setDataPoints((prev) => appendDataPoint(prev, { time: timeLabel, value: newTotal }, MAX_DATA_POINTS));
+    setDataPoints((prev) => appendDataPoint(prev, { time: timeLabel, value: newValue }, MAX_DATA_POINTS));
   }
 
   // WebSocket connection
@@ -153,8 +172,13 @@ export default function Dashboard() {
     );
   }
 
-  // Compute current total for the graph
-  const currentTotal = computeTotalValue(summary, priceMap);
+  // Compute current total for the graph based on display mode
+  const currentTotal = graphDisplayMode === 'profitLoss'
+    ? computeTotalProfitLoss(summary, priceMap)
+    : computeTotalValue(summary, priceMap);
+
+  // Y-axis label changes based on mode
+  const yAxisLabel = graphDisplayMode === 'profitLoss' ? 'Profit/Loss ($)' : 'Value ($)';
 
   return (
     <div className="dashboard">
@@ -169,6 +193,9 @@ export default function Dashboard() {
             dataPoints={dataPoints}
             currentTotal={currentTotal}
             loading={dataPoints.length === 0}
+            displayMode={graphDisplayMode}
+            onDisplayModeChange={setGraphDisplayMode}
+            yAxisLabel={yAxisLabel}
           />
         </div>
       </section>

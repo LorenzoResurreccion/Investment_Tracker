@@ -1,4 +1,4 @@
- # Implementation Plan: Average Cost & Profit/Loss
+  # Implementation Plan: Average Cost & Profit/Loss
 
 ## Overview
 
@@ -113,8 +113,8 @@ This plan implements average cost (cost basis per share) tracking on the back-en
 - [x] 5. Checkpoint - Front-end utility tests
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Front-end UI: DisplayModeToggle component and StocksList integration
-  - [ ] 6.1 Create DisplayModeToggle.jsx component
+- [x] 6. Front-end UI: DisplayModeToggle component and StocksList integration
+  - [x] 6.1 Create DisplayModeToggle.jsx component
     - Create `Front-end/src/Pages/Dashboard/Stocks/DisplayModeToggle.jsx`
     - Create `Front-end/src/Pages/Dashboard/Stocks/DisplayModeToggle.css`
     - Accept `mode` and `onChange` props
@@ -122,13 +122,13 @@ This plan implements average cost (cost basis per share) tracking on the back-en
     - Use `role="radiogroup"`, `role="radio"`, and `aria-checked` attributes
     - _Requirements: 3.1, 4.1_
 
-  - [ ] 6.2 Add display mode state and toggle to StocksList.jsx
+  - [x] 6.2 Add display mode state and toggle to StocksList.jsx
     - Add local `displayMode` state defaulting to `'totalValue'`
     - Render `DisplayModeToggle` above the list
     - Pass `displayMode` and per-symbol `weightedAverageCost` (from summary) to each StockRow
     - _Requirements: 3.1, 3.8_
 
-  - [ ] 6.3 Update StockRow.jsx for conditional P/L rendering
+  - [x] 6.3 Update StockRow.jsx for conditional P/L rendering
     - Accept new props: `displayMode`, `weightedAverageCost`
     - In `'totalValue'` mode: display `quantity × price` as today
     - In `'profitLoss'` mode: compute using `computeProfitLoss`, show "—" if avgCost null
@@ -136,13 +136,13 @@ This plan implements average cost (cost basis per share) tracking on the back-en
     - Show loading indicator when price is unavailable regardless of mode
     - _Requirements: 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 5.3, 5.4_
 
-- [ ] 7. Front-end UI: PortfolioValueGraph profit/loss mode
-  - [ ] 7.1 Add display mode toggle to PortfolioValueGraph.jsx
+- [x] 7. Front-end UI: PortfolioValueGraph profit/loss mode
+  - [x] 7.1 Add display mode toggle to PortfolioValueGraph.jsx
     - Add local `displayMode` state defaulting to `'totalValue'`
     - Render `DisplayModeToggle` above the chart
     - _Requirements: 4.1, 4.6_
 
-  - [ ] 7.2 Update Dashboard.jsx to support P/L data point computation
+  - [x] 7.2 Update Dashboard.jsx to support P/L data point computation
     - Update the WebSocket message handler to pass `displayMode` context to data point logic
     - When mode is `'profitLoss'`, compute data point via `computeTotalProfitLoss(summary, priceMap)`
     - When mode is `'totalValue'`, compute data point via `computeTotalValue(summary, priceMap)` as today
@@ -151,31 +151,31 @@ This plan implements average cost (cost basis per share) tracking on the back-en
     - Change Y-axis label to "Profit/Loss ($)" in P/L mode
     - _Requirements: 4.2, 4.3, 4.4, 4.5, 4.7, 4.8, 5.5, 5.6_
 
-- [ ] 8. Checkpoint - UI components verified
+- [x] 8. Checkpoint - UI components verified
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Front-end UI: AddStockForm averageCost input
-  - [ ] 9.1 Add averageCost field to AddStockForm.jsx
+- [x] 9. Front-end UI: AddStockForm averageCost input
+  - [x] 9.1 Add averageCost field to AddStockForm.jsx
     - Add optional "Average Cost" input field with `type="text"` and `inputMode="decimal"`
     - Integrate with `validateAverageCost` for inline error display
     - Allow empty submission (field is optional)
     - Include the value as `averageCost: Number(value) || null` in POST/PUT request body
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 10. Back-end property tests for persistence and validation
-  - [ ]* 10.1 Write property test: averageCost round-trip persistence (Property 1)
+- [x] 10. Back-end property tests for persistence and validation
+  - [x] 10.1 Write property   test: averageCost round-trip persistence (Property 1)
     - **Property 1: Average cost round-trip persistence**
     - Create `Back-end/src/test/java/com/investmenttracker/investment/AverageCostPersistencePropertyTest.java`
     - Generate random valid BigDecimals (0 to 10^18, 0–8 dp), create investment, read back, assert equality
     - **Validates: Requirements 1.3, 1.4, 2.1**
 
-  - [ ]* 10.2 Write property test: negative averageCost rejection (Property 2)
+  - [x] 10.2 Write property test: negative averageCost rejection (Property 2)
     - **Property 2: Negative averageCost rejection**
     - Create `Back-end/src/test/java/com/investmenttracker/investment/AverageCostValidationPropertyTest.java`
     - Generate random negative BigDecimals, attempt to create, assert HTTP 400
     - **Validates: Requirements 1.6**
 
-- [ ] 11. Final checkpoint - Full integration verification
+- [x] 11. Final checkpoint - Full integration verification
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

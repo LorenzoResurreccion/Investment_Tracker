@@ -8,7 +8,7 @@ A personal investment dashboard that consolidates stocks and crypto holdings in 
 - **Live price streaming** — WebSocket connection to Finnhub for real-time price updates with automatic reconnection and exponential backoff
 - **Full CRUD** — add, edit, and delete individual investment holdings
 - **Per-platform breakdown** — expand any stock row to see holdings grouped by platform, with a single "Edit Holdings" button that enables inline editing, deletion, and adding new holdings for that symbol
-- **Multi-asset symbol search** — search US stocks, ETFs, or crypto (Binance) when adding investments via a type selector
+- **Multi-asset symbol search** — search US stocks or crypto (Binance) when adding investments via a type selector
 - **Responsive layout** — pie chart and graph sit side by side on wide screens, stack vertically on narrow screens
 - **Responsive loading states** — skeleton UI on initial load, connection indicators for WebSocket status
 
@@ -124,17 +124,28 @@ Data persists in Homebrew's default data directory (`/opt/homebrew/var/postgresq
 
 ```bash
 cd Back-end
+cp .env.example .env
+```
 
-export FINNHUB_API_KEY=your_finnhub_api_key_here
-export DATABASE_URL=jdbc:postgresql://localhost:5432/investment_tracker
-export DATABASE_USERNAME=$(whoami)
-export DATABASE_PASSWORD=
+Edit `.env` and fill in your values:
 
+```dotenv
+FINNHUB_API_KEY=your_finnhub_api_key_here
+DATABASE_URL=jdbc:postgresql://localhost:5432/investment_tracker
+DATABASE_USERNAME=your_macos_username
+DATABASE_PASSWORD=
+```
+
+Then build and run:
+
+```bash
 mvn package -DskipTests -q
 java -Xmx256m -jar target/investment-tracker-0.0.1-SNAPSHOT.jar
 ```
 
 Starts on `http://localhost:8080`. Flyway automatically creates the database schema on first run.
+
+The `.env` file is loaded automatically by [spring-dotenv](https://github.com/paulschwarz/spring-dotenv) — no need to manually export variables. The `.env` file is gitignored and never committed.
 
 Note: Running the JAR directly (instead of `mvn spring-boot:run`) uses less memory. Homebrew Postgres uses your macOS username with no password by default (peer authentication).
 
@@ -142,11 +153,14 @@ Note: Running the JAR directly (instead of `mvn spring-boot:run`) uses less memo
 
 ```bash
 cd Front-end
+cp .env.example .env
 npm install
 npm run dev
 ```
 
 Opens at `http://localhost:5173`. Already configured to connect to the back-end at `localhost:8080`.
+
+The `.env` file is optional for local development — sensible defaults are built in. Override `VITE_API_BASE_URL` or `VITE_WS_URL` if your back-end runs on a different host/port.
 
 ### Stopping the App
 
@@ -165,6 +179,10 @@ brew services start postgresql@16
 
 ### Environment Variables
 
+All sensitive configuration lives in `.env` files (gitignored). Copy the `.env.example` in each directory to get started.
+
+**Back-end** (`Back-end/.env`):
+
 | Variable | Example | Required |
 |----------|---------|----------|
 | `FINNHUB_API_KEY` | `csXXXXXXXXXXXXXX` | Yes |
@@ -176,6 +194,15 @@ brew services start postgresql@16
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | No (defaults to this) |
 
 Set `FINNHUB_ENABLED=false` to run the back-end without connecting to Finnhub (useful for testing REST endpoints without live market data).
+
+**Front-end** (`Front-end/.env`):
+
+| Variable | Example | Required |
+|----------|---------|----------|
+| `VITE_API_BASE_URL` | `/api` | No (defaults to `/api`) |
+| `VITE_WS_URL` | `ws://localhost:8080/ws/prices` | No (auto-detected) |
+
+Front-end env vars are optional — defaults work out of the box for local development.
 
 ### Available Scripts (Front-end)
 

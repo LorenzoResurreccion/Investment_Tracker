@@ -16,6 +16,7 @@ function AddStockFormInner({ onClose, onCreated }) {
   const [symbol, setSymbol] = useState('');
   const [quantity, setQuantity] = useState('');
   const [platform, setPlatform] = useState('');
+  const [averageCost, setAverageCost] = useState('');
   const [investmentType, setInvestmentType] = useState('stock');
   const [fieldErrors, setFieldErrors] = useState({});
   const [apiError, setApiError] = useState(null);
@@ -129,6 +130,13 @@ function AddStockFormInner({ onClose, onCreated }) {
     }
   }
 
+  function handleAverageCostChange(e) {
+    setAverageCost(e.target.value);
+    if (fieldErrors.averageCost) {
+      setFieldErrors((prev) => ({ ...prev, averageCost: null }));
+    }
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
 
@@ -136,6 +144,7 @@ function AddStockFormInner({ onClose, onCreated }) {
       symbol,
       quantity,
       platform,
+      averageCost,
     });
 
     if (errors.length > 0) {
@@ -147,6 +156,8 @@ function AddStockFormInner({ onClose, onCreated }) {
           mapped.quantity = err;
         } else if (err.toLowerCase().includes('platform')) {
           mapped.platform = err;
+        } else if (err.toLowerCase().includes('average cost')) {
+          mapped.averageCost = err;
         }
       }
       setFieldErrors(mapped);
@@ -162,6 +173,7 @@ function AddStockFormInner({ onClose, onCreated }) {
         symbol: symbol.trim(),
         quantity: Number(quantity),
         platform: platform.trim() || null,
+        averageCost: Number(averageCost) || null,
       })
       .then((result) => {
         setSubmitting(false);
@@ -301,6 +313,26 @@ function AddStockFormInner({ onClose, onCreated }) {
             {fieldErrors.platform && (
               <span id="add-stock-platform-error" className="add-stock-form__error">
                 {fieldErrors.platform}
+              </span>
+            )}
+          </div>
+
+          {/* Average Cost field */}
+          <div className="add-stock-form__field">
+            <label htmlFor="add-stock-average-cost">Average Cost (optional)</label>
+            <input
+              id="add-stock-average-cost"
+              type="text"
+              inputMode="decimal"
+              value={averageCost}
+              onChange={handleAverageCostChange}
+              placeholder="e.g. 142.50"
+              aria-describedby={fieldErrors.averageCost ? 'add-stock-average-cost-error' : undefined}
+              aria-invalid={!!fieldErrors.averageCost}
+            />
+            {fieldErrors.averageCost && (
+              <span id="add-stock-average-cost-error" className="add-stock-form__error">
+                {fieldErrors.averageCost}
               </span>
             )}
           </div>

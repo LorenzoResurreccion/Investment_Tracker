@@ -1,4 +1,4 @@
-import { formatQuantity, formatCurrency } from '../utils.js';
+import { formatQuantity, formatCurrency, computeProfitLoss } from '../utils.js';
 import './StockRow.css';
 
 export default function StockRow({
@@ -9,9 +9,44 @@ export default function StockRow({
   onToggle,
   // eslint-disable-next-line no-unused-vars
   onHoldingChanged,
+  displayMode,
+  weightedAverageCost,
 }) {
   const hasPrice = price != null;
-  const worth = hasPrice ? formatCurrency(totalQuantity * price) : null;
+
+  function renderValue() {
+    if (!hasPrice) {
+      return (
+        <span className="stock-row-loading" aria-label="Loading price">
+          …
+        </span>
+      );
+    }
+
+    if (displayMode === 'profitLoss') {
+      if (weightedAverageCost == null) {
+        return '—';
+      }
+      const pl = computeProfitLoss(totalQuantity, price, weightedAverageCost);
+      return formatCurrency(pl);
+    }
+
+    // Default: totalValue mode
+    return formatCurrency(totalQuantity * price);
+  }
+
+  function getWorthClassName() {
+    let className = 'stock-row-worth';
+    if (displayMode === 'profitLoss' && hasPrice && weightedAverageCost != null) {
+      const pl = computeProfitLoss(totalQuantity, price, weightedAverageCost);
+      if (pl > 0) {
+        className += ' stock-row-worth--positive';
+      } else if (pl < 0) {
+        className += ' stock-row-worth--negative';
+      }
+    }
+    return className;
+  }
 
   return (
     <div
@@ -29,14 +64,8 @@ export default function StockRow({
     >
       <span className="stock-row-symbol">{symbol}</span>
       <span className="stock-row-quantity">{formatQuantity(totalQuantity)}</span>
-      <span className="stock-row-worth">
-        {hasPrice ? (
-          worth
-        ) : (
-          <span className="stock-row-loading" aria-label="Loading price">
-            …
-          </span>
-        )}
+      <span className={getWorthClassName()}>
+        {renderValue()}
       </span>
     </div>
   );

@@ -36,6 +36,14 @@
   color: #ddd;
 }
 
+.stock-row-worth--positive {
+  color: #4caf50;
+}
+
+.stock-row-worth--negative {
+  color: #f44336;
+}
+
 .stock-row-loading {
   display: inline-block;
   animation: pulse 1.2s ease-in-out infinite;

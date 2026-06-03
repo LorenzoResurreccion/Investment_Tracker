@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import StockRow from './StockRow.jsx';
 import StockDetailPanel from './StockDetailPanel.jsx';
+import DisplayModeToggle from './DisplayModeToggle.jsx';
 import './StocksList.css';
 
 export default function StocksList({ summary, priceMap, onHoldingChanged, error }) {
   const [expandedSymbol, setExpandedSymbol] = useState(null);
+  const [displayMode, setDisplayMode] = useState('totalValue');
 
   function handleToggle(symbol) {
     setExpandedSymbol((current) => (current === symbol ? null : symbol));
@@ -30,6 +32,7 @@ export default function StocksList({ summary, priceMap, onHoldingChanged, error 
 
   return (
     <div className="stocks-list">
+      <DisplayModeToggle mode={displayMode} onChange={setDisplayMode} />
       {summary.map((item) => (
         <div key={item.symbol} className="stocks-list-item">
           <StockRow
@@ -39,6 +42,8 @@ export default function StocksList({ summary, priceMap, onHoldingChanged, error 
             isExpanded={expandedSymbol === item.symbol}
             onToggle={() => handleToggle(item.symbol)}
             onHoldingChanged={onHoldingChanged}
+            displayMode={displayMode}
+            weightedAverageCost={item.weightedAverageCost}
           />
           {expandedSymbol === item.symbol && (
             <StockDetailPanel

@@ -1,0 +1,31 @@
+.display-mode-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
+.display-mode-toggle__btn {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: transparent;
+  color: #aaa;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.display-mode-toggle__btn:hover {
+  background: #2a2a2a;
+  color: #ddd;
+}
+
+.display-mode-toggle__btn--active {
+  background: #333;
+  color: #fff;
+  border-color: #555;
+}

@@ -314,7 +314,7 @@ describe('AddStockForm', () => {
           '/api/investments',
           expect.objectContaining({
             method: 'POST',
-            body: JSON.stringify({ symbol: 'AAPL', quantity: 10, platform: 'Robinhood' }),
+            body: JSON.stringify({ symbol: 'AAPL', quantity: 10, platform: 'Robinhood', averageCost: null }),
           })
         );
       });
@@ -346,7 +346,7 @@ describe('AddStockForm', () => {
           '/api/investments',
           expect.objectContaining({
             method: 'POST',
-            body: JSON.stringify({ symbol: 'TSLA', quantity: 5, platform: null }),
+            body: JSON.stringify({ symbol: 'TSLA', quantity: 5, platform: null, averageCost: null }),
           })
         );
       });

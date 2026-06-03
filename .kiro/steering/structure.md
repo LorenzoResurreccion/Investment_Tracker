@@ -4,8 +4,8 @@
 
 ```
 Investment_Tracker/
-├── Front-end/        # React/Vite application
-├── Back-end/         # Not yet scaffolded
+├── Front-end/        # React 19 + Vite 8 SPA
+├── Back-end/         # Spring Boot REST API + WebSocket
 └── README.md
 ```
 
@@ -18,6 +18,7 @@ Front-end/
 │   ├── App.css           # Root-level styles
 │   ├── main.jsx          # React DOM bootstrap (StrictMode)
 │   ├── index.css         # Global styles
+│   ├── hooks/            # Custom hooks (useApi, useWebSocket)
 │   ├── Nav/              # Navigation components
 │   ├── Pages/            # Page-level components (one per route/view)
 │   └── assets/           # Static assets (images, SVGs)
@@ -25,7 +26,32 @@ Front-end/
 ├── index.html            # Vite HTML entry point
 ├── vite.config.js        # Vite + Babel/React Compiler config
 ├── eslint.config.js      # ESLint flat config
+├── .env                  # Local env overrides (gitignored)
+├── .env.example          # Template for env vars (committed)
 └── package.json
+```
+
+## Back-end
+
+```
+Back-end/
+├── src/
+│   ├── main/
+│   │   ├── java/com/investmenttracker/
+│   │   │   ├── config/          # CORS, WebSocket, Finnhub, logging, startup validation
+│   │   │   ├── dto/             # Shared DTOs (PriceUpdate)
+│   │   │   ├── exception/       # Global exception handler + error response
+│   │   │   ├── finnhub/         # Finnhub WebSocket client + reconnect scheduler
+│   │   │   ├── investment/      # Investment CRUD (entity, controller, service, repo)
+│   │   │   ├── symbol/          # Symbol search service
+│   │   │   └── websocket/       # Server-side WebSocket for price streaming
+│   │   └── resources/
+│   │       ├── application.properties   # Config (references env vars via ${})
+│   │       └── db/migration/            # Flyway SQL migrations
+│   └── test/                    # Unit tests (JUnit), property tests (jqwik), integration tests (Testcontainers)
+├── .env                         # Local secrets (gitignored)
+├── .env.example                 # Template for required env vars (committed)
+└── pom.xml
 ```
 
 ## Conventions
@@ -35,12 +61,4 @@ Front-end/
 - **Navigation**: Shared nav components go in `src/Nav/`.
 - **Styles**: Co-locate CSS with the component it styles (e.g., `Button.css` next to `Button.jsx`). Global styles stay in `index.css`.
 - **Assets**: Static files (images, SVGs) go in `src/assets/`.
-- **Environment variables**: Use `VITE_` prefix in `.env` files; never commit secrets to source.
-
-## Back-end (Planned)
-
-The `Back-end/` directory is empty. When scaffolded, it should follow a clear separation between:
-- WebSocket server (real-time price streaming)
-- REST API (symbol list, user investment CRUD)
-- Kafka producer/consumer layer
-- Database access layer
+- **Environment variables**: Front-end uses `VITE_` prefix in `.env` files; back-end uses `spring-dotenv` to load `.env` automatically. Never commit secrets to source.
