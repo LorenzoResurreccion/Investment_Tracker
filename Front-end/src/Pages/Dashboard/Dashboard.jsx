@@ -47,9 +47,27 @@ export default function Dashboard() {
     graphDisplayModeRef.current = graphDisplayMode;
   }, [graphDisplayMode]);
 
-  // Clear data points when display mode changes
+  // Clear data points when display mode changes, then seed an initial point
+  // from the current priceMap so the graph doesn't wait for a WebSocket message
   useEffect(() => {
-    setDataPoints([]);
+    const currentSummary = summaryRef.current;
+    const currentPrices = priceMapRef.current;
+
+    // Only seed if we have price data available
+    const hasPrices = currentSummary.length > 0 && Object.keys(currentPrices).length > 0;
+
+    if (hasPrices) {
+      let value;
+      if (graphDisplayMode === 'profitLoss') {
+        value = computeTotalProfitLoss(currentSummary, currentPrices);
+      } else {
+        value = computeTotalValue(currentSummary, currentPrices);
+      }
+      const timeLabel = new Date().toLocaleTimeString();
+      setDataPoints([{ time: timeLabel, value }]);
+    } else {
+      setDataPoints([]);
+    }
   }, [graphDisplayMode]);
 
   // WebSocket message handler
@@ -186,7 +204,7 @@ export default function Dashboard() {
 
       <section className="dashboard__charts">
         <div className="dashboard__pie-chart">
-          <StockPieChart summary={summary} />
+          <StockPieChart summary={summary} priceMap={priceMap} />
         </div>
         <div className="dashboard__graph">
           <PortfolioValueGraph

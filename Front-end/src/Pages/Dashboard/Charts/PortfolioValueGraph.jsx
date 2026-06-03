@@ -64,7 +64,7 @@ export default function PortfolioValueGraph({ dataPoints, currentTotal, loading,
           <LineChart data={dataPoints} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="time" tick={{ fontSize: 16 }} />
-            <YAxis domain={['auto', 'auto']} tick={{ fontSize: 16 }} />
+            <YAxis domain={['auto', 'auto']} tick={{ fontSize: 14 }} />
             <Tooltip formatter={(value) => formatCurrency(value)} />
             <Line type="monotone" dataKey="value" stroke="#4e79a7" dot={false} strokeWidth={2} />
           </LineChart>
