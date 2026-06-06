@@ -8,6 +8,7 @@ A personal investment dashboard that consolidates stocks and crypto holdings in 
 - **Profit/Loss tracking** — toggle between total value and profit/loss display on both the holdings list and the portfolio graph; per-holding P/L computed from average cost basis
 - **Average cost tracking** — record your average cost per share for each holding; editable inline when managing holdings
 - **Live price streaming** — WebSocket connection to Finnhub for real-time price updates with automatic reconnection (infinite retries with exponential backoff, capped at 60s)
+- **After-hours price snapshots** — when the market is closed, the back-end detects this and fetches the last closing price for each holding via Finnhub's REST API, delivering them over the same WebSocket channel so the dashboard displays values immediately without waiting for live trades
 - **Full CRUD** — add, edit, and delete individual investment holdings (including average cost)
 - **Per-platform breakdown** — expand any stock row to see holdings grouped by platform, with a single "Edit Holdings" button that enables inline editing, deletion, and adding new holdings for that symbol
 - **Multi-asset symbol search** — search US stocks or crypto (Binance) when adding investments via a type selector
