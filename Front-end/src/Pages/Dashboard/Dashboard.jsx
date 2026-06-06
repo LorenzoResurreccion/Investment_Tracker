@@ -96,7 +96,7 @@ export default function Dashboard() {
   }
 
   // WebSocket connection
-  const { status: wsConnectionStatus, disconnect: disconnectWs } = useWebSocket(WS_URL, {
+  const { status: wsConnectionStatus } = useWebSocket(WS_URL, {
     onMessage: handlePriceUpdate,
     reconnect: true,
     maxAttempts: 10,
@@ -157,13 +157,6 @@ export default function Dashboard() {
   function handleStockCreated() {
     handleHoldingChanged();
   }
-
-  // Clean up WebSocket on unmount (close with code 1000)
-  useEffect(() => {
-    return () => {
-      disconnectWs();
-    };
-  }, [disconnectWs]);
 
   // Loading state — show skeleton
   if (loading) {
