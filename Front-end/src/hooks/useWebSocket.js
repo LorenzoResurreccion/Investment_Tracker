@@ -56,10 +56,7 @@ export default function useWebSocket(url, options = {}) {
       wsRef.current = ws;
       setStatus('connecting');
 
-      let wasOpened = false;
-
       ws.onopen = () => {
-        wasOpened = true;
         attemptRef.current = 0;
         setStatus('connected');
       };
