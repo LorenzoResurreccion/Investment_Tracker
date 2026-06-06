@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Manages exponential back-off reconnect scheduling for the Finnhub WebSocket client.
  *
- * Back-off sequence: 1s, 2s, 4s, 8s, 16s, 32s, 60s (capped), 60s, 60s, 60s
- * for attempts 0–9. After 10 consecutive failed attempts, logs FATAL and stops.
+ * Back-off sequence: 1s, 2s, 4s, 8s, 16s, 32s, 60s, 60s, 60s, ...
+ * Retries indefinitely (capped at 60s between attempts) until connection succeeds.
  *
  * If Finnhub rejects the connection with HTTP 401/403, onAuthFailure()
  * sets a permanent flag that prevents any further reconnect attempts until the
@@ -27,8 +27,8 @@ public class FinnhubReconnectScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(FinnhubReconnectScheduler.class);
 
-    /** Maximum number of consecutive reconnect attempts before giving up. */
-    private static final int MAX_ATTEMPTS = 10;
+    /** Maximum number of consecutive reconnect attempts before giving up. Disabled (infinite retries). */
+    private static final int MAX_ATTEMPTS = Integer.MAX_VALUE;
 
     private final ScheduledExecutorService scheduler =
             Executors.newSingleThreadScheduledExecutor(r -> {
@@ -87,8 +87,8 @@ public class FinnhubReconnectScheduler {
         }
 
         long delaySecs = delayForAttempt(attempt);
-        log.info("FinnhubReconnectScheduler: scheduling reconnect attempt {} of {} in {} second(s)",
-                attempt + 1, MAX_ATTEMPTS, delaySecs);
+        log.info("FinnhubReconnectScheduler: scheduling reconnect attempt {} in {} second(s)",
+                attempt + 1, delaySecs);
 
         attemptCount.incrementAndGet();
 

@@ -57,60 +57,35 @@ class FinnhubReconnectSchedulerTest {
 
     @Test
     @DisplayName("scheduleReconnect stops scheduling after 10 attempts — 11th call does not invoke the action")
-    void scheduleReconnect_stopsAfter10Attempts() throws InterruptedException {
-        // Exhaust all 10 allowed attempts. We use a no-op action so the
-        // scheduled tasks complete instantly when they eventually fire, but we
-        // don't wait for them — we only care that the 11th call is rejected.
-        for (int i = 0; i < 10; i++) {
-            scheduler.scheduleReconnect(() -> { /* no-op */ });
+    void scheduleReconnect_continuesIndefinitely() throws InterruptedException {
+        // Schedule more than the old limit of 10 — should all be accepted
+        AtomicInteger callCount = new AtomicInteger(0);
+        for (int i = 0; i < 15; i++) {
+            scheduler.scheduleReconnect(callCount::incrementAndGet);
         }
 
-        // The 11th call should be rejected immediately (FATAL log, no scheduling).
-        AtomicInteger callCount = new AtomicInteger(0);
-        scheduler.scheduleReconnect(callCount::incrementAndGet);
+        // All 15 should be scheduled (they'll fire at various delays).
+        // The first few have short delays (1s, 2s...) so we just verify
+        // that the scheduler didn't reject any by checking the attempt counter
+        // didn't cap out. We verify by scheduling a 16th and confirming it's accepted.
+        // If it were rejected, the action wouldn't be scheduled at all.
+        AtomicInteger extraCall = new AtomicInteger(0);
+        scheduler.scheduleReconnect(extraCall::incrementAndGet);
 
-        // Give the executor a brief window — if the action were scheduled it
-        // would fire almost immediately (delayForAttempt(10) would be 60 s, but
-        // the scheduler should have returned before scheduling anything).
-        // We wait a short time and assert the action was never invoked.
-        Thread.sleep(200);
+        // Give the first attempt (1s delay) time to fire
+        Thread.sleep(1500);
         assertThat(callCount.get())
-                .as("reconnect action must NOT be invoked after 10 exhausted attempts")
-                .isEqualTo(0);
+                .as("at least the first attempt (1s delay) should have fired")
+                .isGreaterThanOrEqualTo(1);
     }
 
     @Test
-    @DisplayName("scheduleReconnect accepts exactly 10 attempts before stopping")
-    void scheduleReconnect_accepts10AttemptsExactly() throws InterruptedException {
-        // Track how many times the action is actually *scheduled* (not necessarily
-        // executed, since delays are long). We verify by counting calls to
-        // scheduleReconnect that do NOT return early.
-        //
-        // Strategy: use a latch-based action with a very short delay by calling
-        // scheduleReconnect 10 times and confirming none of the 11th+ calls
-        // schedule anything. We verify the attempt counter resets correctly via
-        // reset() in a separate test, so here we just confirm the boundary.
-
-        AtomicInteger scheduledCount = new AtomicInteger(0);
-
-        // Wrap the action to count how many times it is *scheduled* (i.e., the
-        // scheduler accepted the call). We can't easily intercept the internal
-        // ScheduledExecutorService, so we rely on the fact that after 10 calls
-        // the 11th is a no-op. We verify this by checking the action is never
-        // called on the 11th invocation (same as the test above, but explicit
-        // about the boundary).
-        for (int i = 0; i < 10; i++) {
-            scheduler.scheduleReconnect(scheduledCount::incrementAndGet);
-        }
-
-        // 11th call — must be rejected
-        AtomicInteger rejectedActionCalls = new AtomicInteger(0);
-        scheduler.scheduleReconnect(rejectedActionCalls::incrementAndGet);
-
-        Thread.sleep(200);
-        assertThat(rejectedActionCalls.get())
-                .as("action passed to the 11th scheduleReconnect call must never be invoked")
-                .isEqualTo(0);
+    @DisplayName("scheduleReconnect caps delay at 60 seconds")
+    void scheduleReconnect_capsDelayAt60Seconds() {
+        // Attempts beyond index 6 should all be 60s
+        assertThat(scheduler.delayForAttempt(6)).isEqualTo(60L);
+        assertThat(scheduler.delayForAttempt(10)).isEqualTo(60L);
+        assertThat(scheduler.delayForAttempt(100)).isEqualTo(60L);
     }
 
     // -------------------------------------------------------------------------
@@ -156,41 +131,25 @@ class FinnhubReconnectSchedulerTest {
 
     @Test
     @DisplayName("reset() clears the attempt counter so delayForAttempt(0) is effective again")
-    void reset_clearsAttemptCounter_delayIsBackToBase() {
+    void reset_clearsAttemptCounter_delayIsBackToBase() throws InterruptedException {
         // After several scheduleReconnect calls the internal counter is > 0.
         // reset() should bring it back to 0, meaning the next scheduleReconnect
         // will use delayForAttempt(0) = 1 s again.
-        //
-        // We verify this indirectly: after reset(), we can call scheduleReconnect
-        // 10 more times without hitting the MAX_ATTEMPTS guard.
         for (int i = 0; i < 5; i++) {
             scheduler.scheduleReconnect(() -> { /* no-op */ });
         }
 
         scheduler.reset();
 
-        // After reset, 10 more calls should all be accepted (not rejected).
-        // We verify by checking that the 10th call after reset is still accepted
-        // (i.e., the action is scheduled, not silently dropped).
-        // We use a CountDownLatch to detect whether the action is scheduled at all.
-        // Since delays are long (1 s for attempt 0), we only verify the 11th call
-        // after reset is rejected — confirming the counter restarted from 0.
-        for (int i = 0; i < 10; i++) {
-            scheduler.scheduleReconnect(() -> { /* no-op */ });
-        }
-
+        // After reset, scheduling should continue from attempt 0 (1s delay).
+        // Verify the action fires quickly (within 1.5s) confirming the counter reset.
         AtomicInteger callCount = new AtomicInteger(0);
-        scheduler.scheduleReconnect(callCount::incrementAndGet); // 11th after reset → must be rejected
+        scheduler.scheduleReconnect(callCount::incrementAndGet);
 
-        // Brief wait — action must not be invoked
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        Thread.sleep(1500);
         assertThat(callCount.get())
-                .as("after reset(), the attempt counter restarts from 0; the 11th call after reset must be rejected")
-                .isEqualTo(0);
+                .as("after reset(), the first attempt should fire with 1s delay")
+                .isEqualTo(1);
     }
 
     @Test

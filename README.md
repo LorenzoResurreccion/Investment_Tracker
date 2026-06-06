@@ -4,9 +4,11 @@ A personal investment dashboard that consolidates stocks and crypto holdings in 
 
 ## Features
 
-- **Real-time portfolio dashboard** — pie chart showing asset allocation by quantity, live portfolio value graph, and scrollable holdings list displayed side by side (responsive — stacks on small screens)
-- **Live price streaming** — WebSocket connection to Finnhub for real-time price updates with automatic reconnection and exponential backoff
-- **Full CRUD** — add, edit, and delete individual investment holdings
+- **Real-time portfolio dashboard** — pie chart showing asset allocation (by shares or dollar value), live portfolio value graph, and scrollable holdings list displayed side by side (responsive — stacks on small screens)
+- **Profit/Loss tracking** — toggle between total value and profit/loss display on both the holdings list and the portfolio graph; per-holding P/L computed from average cost basis
+- **Average cost tracking** — record your average cost per share for each holding; editable inline when managing holdings
+- **Live price streaming** — WebSocket connection to Finnhub for real-time price updates with automatic reconnection (infinite retries with exponential backoff, capped at 60s)
+- **Full CRUD** — add, edit, and delete individual investment holdings (including average cost)
 - **Per-platform breakdown** — expand any stock row to see holdings grouped by platform, with a single "Edit Holdings" button that enables inline editing, deletion, and adding new holdings for that symbol
 - **Multi-asset symbol search** — search US stocks or crypto (Binance) when adding investments via a type selector
 - **Responsive layout** — pie chart and graph sit side by side on wide screens, stack vertically on narrow screens
@@ -43,14 +45,15 @@ Front-end/src/
 │   ├── Dashboard.jsx          # Page root — owns state, WebSocket, REST calls
 │   ├── utils.js               # Formatting, computation, validation utilities
 │   ├── Charts/
-│   │   ├── StockPieChart.jsx  # Portfolio allocation pie chart
-│   │   └── PortfolioValueGraph.jsx  # Real-time portfolio value line chart
+│   │   ├── StockPieChart.jsx  # Portfolio allocation pie chart (shares/value toggle)
+│   │   └── PortfolioValueGraph.jsx  # Real-time portfolio value/P&L line chart
 │   ├── Stocks/
 │   │   ├── StocksList.jsx     # Accordion list of all holdings by symbol
-│   │   ├── StockRow.jsx       # Single symbol row (quantity + current worth)
+│   │   ├── StockRow.jsx       # Single symbol row (value or P/L display)
 │   │   ├── StockDetailPanel.jsx  # Expanded per-platform holdings with edit/delete
+│   │   ├── DisplayModeToggle.jsx # Reusable toggle for Total Value / Profit/Loss
 │   │   ├── AddStockButton.jsx
-│   │   └── AddStockForm.jsx   # Form with symbol search, validation
+│   │   └── AddStockForm.jsx   # Form with symbol search, validation, averageCost
 │   └── Status/
 │       ├── ConnectionIndicator.jsx  # WebSocket status badge
 │       └── DashboardSkeleton.jsx    # Loading skeleton
@@ -76,10 +79,10 @@ Spring Boot application providing REST APIs and real-time price streaming.
 **REST API endpoints:**
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/investments/summary` | Portfolio summary (symbol, totalQuantity, holdingCount) |
+| GET | `/api/investments/summary` | Portfolio summary (symbol, totalQuantity, holdingCount, weightedAverageCost) |
 | GET | `/api/investments/symbol/{symbol}` | Per-platform holdings for a symbol |
-| POST | `/api/investments` | Create a new holding |
-| PUT | `/api/investments/{id}` | Update a holding (quantity, platform) |
+| POST | `/api/investments` | Create a new holding (with optional averageCost) |
+| PUT | `/api/investments/{id}` | Update a holding (quantity, platform, averageCost) |
 | DELETE | `/api/investments/{id}` | Delete a holding |
 | GET | `/api/symbols/search?q=...&type=...` | Search symbols (type: stock, crypto, etf) |
 
@@ -216,14 +219,16 @@ npm test          # Run all tests (Vitest)
 
 ## Testing
 
-The front-end has two layers of tests:
+### Front-end
+
+Two layers of tests (Vitest + fast-check):
 
 **Unit tests** (Testing Library + Vitest) — cover component rendering, interactions, loading/error states, and API integration flows.
 
 **Property-based tests** (fast-check) — verify correctness properties across randomized inputs:
 1. Pie chart slice proportions with price filtering
 2. Total portfolio value computation
-3. Data points buffer bounded at 200 (FIFO eviction)
+3. Data points buffer bounded at 50 (FIFO eviction)
 4. Currency formatting (exactly 2 decimal places)
 5. Quantity formatting (up to 4 decimal places)
 6. Accordion invariant (at most one panel expanded)
@@ -231,12 +236,44 @@ The front-end has two layers of tests:
 8. Investment form validation
 9. Symbol row removal when all holdings deleted
 10. Exponential backoff delay computation
+11. Per-holding profit/loss formula
+12. Total portfolio profit/loss sum
+13. Average cost validation (decimal places, non-positive, non-numeric)
 
-Run all tests:
+Run front-end tests:
 
 ```bash
 cd Front-end
 npm test
+```
+
+### Back-end
+
+Two layers of tests (JUnit 5 + jqwik):
+
+**Unit tests** — service logic, controller behavior, exception handling.
+
+**Property-based tests** (jqwik) — verify invariants across randomized inputs:
+1. Average cost round-trip persistence
+2. Negative average cost rejection
+3. Weighted average cost computation
+4. Investment CRUD round-trip
+5. Partial update field isolation
+6. Price update serialization round-trip
+7. Error response internals never exposed
+
+Run back-end tests:
+
+```bash
+cd Back-end
+mvn test -Dtest='!*IntegrationTest'
+```
+
+Integration tests (require Docker for Testcontainers):
+
+```bash
+cd Back-end
+mvn test
 ```
 
 ## Design Decisions
@@ -249,4 +286,15 @@ npm test
 - **Single WebSocket connection** — owned by Dashboard, price map shared via props to children
 - **No Kafka** — removed for simplicity; Finnhub prices are broadcast directly to browser WebSocket clients via `PriceBroadcaster`. Kafka can be re-introduced for multi-user scaling (see `docs/future-features.md`)
 - **FinnhubClient as @Bean** — created via `FinnhubConfig` (not `@Component`) to avoid CGLIB proxy issues with the `WebSocketClient` superclass
-- **Pie chart by quantity** — shows allocation by share count rather than dollar value, so it works without live price data
+- **Pie chart dual mode** — toggles between share count and dollar value allocation; defaults to shares so it works without live price data
+- **P/L computed client-side** — back-end provides averageCost, front-end computes P/L using real-time prices from the WebSocket feed
+- **Infinite reconnect with backoff** — Finnhub WebSocket retries indefinitely (capped at 60s) rather than giving up after 10 attempts; stops only on auth failure (401/403)
+- **Environment via .env files** — back-end uses spring-dotenv, front-end uses Vite's built-in support; no manual exports needed
+
+## Deployment
+
+The app deploys automatically via GitHub Actions on push to `main`:
+- Back-end JAR is uploaded to a Lightsail instance via SSH
+- Front-end is synced to S3 with CloudFront cache invalidation
+
+See [`docs/aws-deployment-guide.md`](docs/aws-deployment-guide.md) for the full setup walkthrough.

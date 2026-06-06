@@ -1,0 +1,115 @@
+name: Deploy
+
+# Trigger: runs whenever code is pushed to main
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # ─── Job 1: Run back-end tests ───────────────────────────────────────
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run back-end tests (skip Docker-dependent integration tests)
+        run: mvn test -Dtest='!*IntegrationTest' -q
+        working-directory: Back-end
+
+  # ─── Job 2: Run front-end tests ─────────────────────────────────────
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Front-end/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: Front-end
+
+      - name: Run front-end tests
+        run: npx vitest run
+        working-directory: Front-end
+
+  # ─── Job 3: Deploy (only if both test jobs pass) ─────────────────────
+  deploy:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Build back-end JAR ──
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build JAR
+        run: mvn package -DskipTests -q
+        working-directory: Back-end
+
+      # ── Build front-end ──
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Front-end/package-lock.json
+
+      - name: Install front-end dependencies
+        run: npm ci
+        working-directory: Front-end
+
+      - name: Build front-end for production
+        run: npm run build
+        working-directory: Front-end
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+
+      # ── Deploy back-end to Lightsail via SSH ──
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/lightsail.pem
+          chmod 600 ~/.ssh/lightsail.pem
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload JAR to Lightsail
+        run: |
+          scp -i ~/.ssh/lightsail.pem \
+            Back-end/target/investment-tracker-0.0.1-SNAPSHOT.jar \
+            ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/opt/app/investment-tracker.jar
+
+      - name: Restart back-end service
+        run: |
+          ssh -i ~/.ssh/lightsail.pem \
+            ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
+            "sudo systemctl restart investment-tracker"
+
+      # ── Deploy front-end to S3 ──
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Sync front-end to S3
+        run: aws s3 sync Front-end/dist/ s3://${{ secrets.S3_BUCKET }} --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
