@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
-import { formatCurrency } from '../utils.js';
 import './StockPieChart.css';
 
 const COLORS = [

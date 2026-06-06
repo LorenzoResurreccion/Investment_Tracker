@@ -24,7 +24,6 @@ export default function Dashboard() {
   const [summary, setSummary] = useState([]);
   const [priceMap, setPriceMap] = useState({});
   const [dataPoints, setDataPoints] = useState([]);
-  const [wsStatus, setWsStatus] = useState('disconnected');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addFormOpen, setAddFormOpen] = useState(false);
@@ -102,11 +101,6 @@ export default function Dashboard() {
     reconnect: true,
     maxAttempts: 10,
   });
-
-  // Sync WebSocket status to state
-  useEffect(() => {
-    setWsStatus(wsConnectionStatus);
-  }, [wsConnectionStatus]);
 
   // Initial data fetch with timeout
   useEffect(() => {
@@ -200,7 +194,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-      <ConnectionIndicator status={wsStatus} />
+      <ConnectionIndicator status={wsConnectionStatus} />
 
       <section className="dashboard__charts">
         <div className="dashboard__pie-chart">
