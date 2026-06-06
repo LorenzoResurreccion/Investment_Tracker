@@ -84,12 +84,6 @@ export default function useWebSocket(url, options = {}) {
           return;
         }
 
-        // Don't reconnect if the socket was never opened (e.g. StrictMode cleanup)
-        if (!wasOpened) {
-          setStatus('disconnected');
-          return;
-        }
-
         // Non-1000 close — attempt reconnect if enabled
         if (reconnectRef.current) {
           scheduleReconnect();
