@@ -42,7 +42,9 @@ class StartupFailureIntegrationTest {
         ProcessResult result = launchApplicationSubprocess(Map.of(
                 "DATABASE_URL", "jdbc:postgresql://localhost:5432/test",
                 "DATABASE_USERNAME", "test",
-                "DATABASE_PASSWORD", "test"
+                "DATABASE_PASSWORD", "test",
+                "AWS_REGION", "us-east-1",
+                "COGNITO_USER_POOL_ID", "us-east-1_TestPool"
                 // FINNHUB_API_KEY intentionally omitted
         ));
 
@@ -77,7 +79,9 @@ class StartupFailureIntegrationTest {
         ProcessResult result = launchApplicationSubprocess(Map.of(
                 "FINNHUB_API_KEY", "test-key",
                 "DATABASE_USERNAME", "test",
-                "DATABASE_PASSWORD", "test"
+                "DATABASE_PASSWORD", "test",
+                "AWS_REGION", "us-east-1",
+                "COGNITO_USER_POOL_ID", "us-east-1_TestPool"
                 // DATABASE_URL intentionally omitted
         ));
 
@@ -113,7 +117,9 @@ class StartupFailureIntegrationTest {
                 "FINNHUB_API_KEY", "test-key",
                 "DATABASE_URL", "postgresql://localhost:5432/test", // malformed: no jdbc: prefix
                 "DATABASE_USERNAME", "test",
-                "DATABASE_PASSWORD", "test"
+                "DATABASE_PASSWORD", "test",
+                "AWS_REGION", "us-east-1",
+                "COGNITO_USER_POOL_ID", "us-east-1_TestPool"
         ));
 
         // The process should have exited
@@ -156,6 +162,8 @@ class StartupFailureIntegrationTest {
         props.put("spring.datasource.password", "test");
         props.put("FINNHUB_API_KEY", "test-key");
         props.put("DATABASE_URL", "jdbc:postgresql://192.0.2.1:5432/nonexistent");
+        props.put("AWS_REGION", "us-east-1");
+        props.put("COGNITO_USER_POOL_ID", "us-east-1_TestPool");
         // Short connection timeout so the test doesn't wait 30s
         props.put("spring.datasource.hikari.connection-timeout", "3000");
         props.put("spring.datasource.hikari.initialization-fail-timeout", "1");
@@ -194,6 +202,8 @@ class StartupFailureIntegrationTest {
 
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.redirectErrorStream(true);
+        // Run from temp directory so spring-dotenv doesn't load .env from the project
+        pb.directory(new java.io.File(System.getProperty("java.io.tmpdir")));
 
         // Clear environment variables that might interfere
         Map<String, String> env = pb.environment();

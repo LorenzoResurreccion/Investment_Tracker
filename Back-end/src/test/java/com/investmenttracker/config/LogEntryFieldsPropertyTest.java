@@ -173,7 +173,7 @@ class LogEntryFieldsPropertyTest {
                 "SubscriptionManager",
                 "InvestmentService",
                 "SymbolSearchService",
-                "PriceWebSocketEndpoint"
+                "PriceWebSocketHandler"
         );
     }
 

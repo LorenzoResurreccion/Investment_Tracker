@@ -5,6 +5,7 @@ import com.investmenttracker.finnhub.SubscriptionManager;
 import com.investmenttracker.symbol.Symbol;
 import com.investmenttracker.symbol.SymbolRepository;
 import com.investmenttracker.user.User;
+import com.investmenttracker.websocket.SessionRegistry;
 import net.jqwik.api.*;
 import net.jqwik.api.lifecycle.BeforeProperty;
 
@@ -34,6 +35,7 @@ class UserDataIsolationPropertyTest {
     private SymbolRepository symbolRepository;
     private SubscriptionManager subscriptionManager;
     private FinnhubClient finnhubClient;
+    private SessionRegistry sessionRegistry;
     private HoldingService holdingService;
 
     // In-memory store: all holdings in the system
@@ -51,6 +53,7 @@ class UserDataIsolationPropertyTest {
         symbolRepository = mock(SymbolRepository.class);
         subscriptionManager = mock(SubscriptionManager.class);
         finnhubClient = mock(FinnhubClient.class);
+        sessionRegistry = mock(SessionRegistry.class);
 
         // Mock findByUser: filter allHoldings by user
         when(holdingRepository.findByUser(any(User.class))).thenAnswer(invocation -> {
@@ -79,7 +82,8 @@ class UserDataIsolationPropertyTest {
                 holdingRepository,
                 symbolRepository,
                 subscriptionManager,
-                finnhubClient
+                finnhubClient,
+                sessionRegistry
         );
     }
 

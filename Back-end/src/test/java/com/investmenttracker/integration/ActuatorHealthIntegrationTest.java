@@ -1,6 +1,5 @@
 package com.investmenttracker.integration;
 
-import com.investmenttracker.config.WebSocketServerConfig;
 import com.investmenttracker.finnhub.FinnhubClient;
 import com.investmenttracker.finnhub.FinnhubReconnectScheduler;
 import com.investmenttracker.websocket.PriceBroadcaster;
@@ -60,9 +59,6 @@ class ActuatorHealthIntegrationTest {
 
     @MockBean
     private PriceBroadcaster priceBroadcaster;
-
-    @MockBean
-    private WebSocketServerConfig webSocketServerConfig;
 
     @Test
     void actuatorHealth_returnsUpStatus() throws Exception {

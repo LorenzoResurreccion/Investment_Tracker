@@ -5,6 +5,7 @@ import com.investmenttracker.finnhub.SubscriptionManager;
 import com.investmenttracker.symbol.Symbol;
 import com.investmenttracker.symbol.SymbolRepository;
 import com.investmenttracker.user.User;
+import com.investmenttracker.websocket.SessionRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -42,22 +43,25 @@ public class HoldingService {
     private final SymbolRepository symbolRepository;
     private final SubscriptionManager subscriptionManager;
     private final FinnhubClient finnhubClient;
+    private final SessionRegistry sessionRegistry;
 
     public HoldingService(HoldingRepository holdingRepository,
                           SymbolRepository symbolRepository,
                           SubscriptionManager subscriptionManager,
-                          FinnhubClient finnhubClient) {
+                          FinnhubClient finnhubClient,
+                          SessionRegistry sessionRegistry) {
         this.holdingRepository = holdingRepository;
         this.symbolRepository = symbolRepository;
         this.subscriptionManager = subscriptionManager;
         this.finnhubClient = finnhubClient;
+        this.sessionRegistry = sessionRegistry;
     }
 
     /**
-     * Initialises the subscription set from the database on startup.
+     * Initialises the subscription reference counts from the database on startup.
      *
-     * Queries all distinct symbols from persisted holdings and adds each to the
-     * SubscriptionManager. Subscribe frames are sent later by FinnhubClient.onOpen()
+     * Queries all distinct symbols from persisted holdings and increments the
+     * reference count for each. Subscribe frames are sent later by FinnhubClient.onOpen()
      * via resubscribeAll() once the WebSocket connection is established.
      */
     @PostConstruct
@@ -65,7 +69,7 @@ public class HoldingService {
         log.info("HoldingService: initialising subscriptions from database");
         List<String> symbols = holdingRepository.findDistinctSymbolTickers();
         for (String symbol : symbols) {
-            subscriptionManager.add(symbol);
+            subscriptionManager.increment(symbol);
         }
         log.info("HoldingService: initialised {} subscription(s)", symbols.size());
     }
@@ -169,6 +173,9 @@ public class HoldingService {
             finnhubClient.subscribe(symbol.getTicker());
         }
 
+        // Update connected session's symbol set
+        sessionRegistry.addSymbolToUserSessions(user, symbol.getTicker());
+
         log.info("HoldingService: created holding id={}, symbol='{}', user='{}'",
                 saved.getId(), symbol.getTicker(), user.getUsername());
         return saved;
@@ -241,6 +248,15 @@ public class HoldingService {
                 finnhubClient.subscribe(newTicker);
             }
 
+            // Update connected session's symbol sets for the user
+            // Remove old ticker if user no longer holds it on any platform
+            boolean userStillHoldsOld = !holdingRepository
+                    .findByUserAndSymbol_Ticker(user, oldTicker).isEmpty();
+            if (!userStillHoldsOld) {
+                sessionRegistry.removeSymbolFromUserSessions(user, oldTicker);
+            }
+            sessionRegistry.addSymbolToUserSessions(user, newTicker);
+
             log.info("HoldingService: updated holding id={}, symbol changed '{}' -> '{}', user='{}'",
                     id, oldTicker, newTicker, user.getUsername());
         } else {
@@ -276,6 +292,13 @@ public class HoldingService {
 
         String ticker = holding.getSymbol().getTicker();
         holdingRepository.delete(holding);
+
+        // Check if user still holds this symbol on another platform
+        boolean userStillHolds = !holdingRepository
+                .findByUserAndSymbol_Ticker(user, ticker).isEmpty();
+        if (!userStillHolds) {
+            sessionRegistry.removeSymbolFromUserSessions(user, ticker);
+        }
 
         // Unsubscribe only if no other holding references this symbol
         boolean symbolStillReferenced = holdingRepository.existsBySymbol_Ticker(ticker);

@@ -5,6 +5,7 @@ import com.investmenttracker.finnhub.SubscriptionManager;
 import com.investmenttracker.symbol.Symbol;
 import com.investmenttracker.symbol.SymbolRepository;
 import com.investmenttracker.user.User;
+import com.investmenttracker.websocket.SessionRegistry;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,6 +49,9 @@ class HoldingServiceTest {
     @Mock
     private FinnhubClient finnhubClient;
 
+    @Mock
+    private SessionRegistry sessionRegistry;
+
     private HoldingService holdingService;
 
     private User userA;
@@ -60,7 +64,8 @@ class HoldingServiceTest {
                 holdingRepository,
                 symbolRepository,
                 subscriptionManager,
-                finnhubClient
+                finnhubClient,
+                sessionRegistry
         );
 
         userA = new User();

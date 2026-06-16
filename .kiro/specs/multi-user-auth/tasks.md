@@ -103,8 +103,8 @@ This plan converts the Investment Tracker from a single-user application to a mu
   - Ensure all tests pass, ask the user if questions arise.
   - Verify: CRUD operations are user-scoped, cross-user access returns 403, portfolio summary only shows authenticated user's data.
 
-- [ ] 9. Refactor SubscriptionManager with reference counting
-  - [ ] 9.1 Refactor `SubscriptionManager` to use `ConcurrentHashMap<String, AtomicInteger>`
+- [x] 9. Refactor SubscriptionManager with reference counting
+  - [x] 9.1 Refactor `SubscriptionManager` to use `ConcurrentHashMap<String, AtomicInteger>`
     - Replace `CopyOnWriteArraySet<String>` with `ConcurrentHashMap<String, AtomicInteger>` for reference counting
     - Implement `increment(String symbol)` — returns `true` if count transitions from 0 → 1 (subscribe needed)
     - Implement `decrement(String symbol)` — returns `true` if count transitions from 1 → 0 (unsubscribe needed)
@@ -112,21 +112,21 @@ This plan converts the Investment Tracker from a single-user application to a mu
     - Keep `resubscribeAll(Consumer<String>)` for reconnect scenarios
     - Update `initSubscriptions()` logic in `HoldingService` to use `increment` for each distinct symbol on startup
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
-  - [ ]* 9.2 Write property test for reference count invariant (Property 5)
+  - [x] 9.2 Write property test for reference count invariant (Property 5)
     - **Property 5: Reference Count Invariant**
     - Generate random sequences of increment/decrement operations for random symbols, verify the count always equals the expected number of active references
     - **Validates: Requirements 5.2, 5.4**
-  - [ ]* 9.3 Write property test for subscribe on first interest (Property 6)
+  - [x] 9.3 Write property test for subscribe on first interest (Property 6)
     - **Property 6: Subscribe on First Interest**
     - Generate sequences where a symbol's count starts at 0, increment, verify `increment()` returns true exactly once (on 0→1 transition)
     - **Validates: Requirements 5.1, 5.5**
-  - [ ]* 9.4 Write property test for unsubscribe on last interest (Property 7)
+  - [x] 9.4 Write property test for unsubscribe on last interest (Property 7)
     - **Property 7: Unsubscribe on Last Interest**
     - Generate sequences where a symbol's count reaches 1, decrement, verify `decrement()` returns true exactly once (on 1→0 transition)
     - **Validates: Requirements 5.3, 5.6**
 
-- [ ] 10. WebSocket authentication and session registry
-  - [ ] 10.1 Create `SessionRegistry` component
+- [x] 10. WebSocket authentication and session registry
+  - [x] 10.1 Create `SessionRegistry` component
     - Implement `ConcurrentHashMap<String, Set<String>>` for session ID → symbols mapping
     - Implement `ConcurrentHashMap<String, Set<String>>` for symbol → session IDs mapping (reverse index)
     - Implement `ConcurrentHashMap<String, User>` for session ID → user mapping
@@ -135,47 +135,47 @@ This plan converts the Investment Tracker from a single-user application to a mu
     - Implement `addSymbolToSession(String sessionId, String symbol)` and `removeSymbolFromSession(String sessionId, String symbol)`
     - Implement `getSessionsForSymbol(String symbol)` for the broadcaster
     - _Requirements: 5.1, 5.3, 5.4, 6.1, 6.3_
-  - [ ] 10.2 Create `WebSocketAuthInterceptor` (HandshakeInterceptor)
+  - [x] 10.2 Create `WebSocketAuthInterceptor` (HandshakeInterceptor)
     - Extract JWT from `?token=` query parameter during WebSocket upgrade handshake
     - Validate JWT using Spring Security's `JwtDecoder` bean
     - Resolve user from `sub` claim (reuse `UserRepository.findByCognitoSub`)
     - Store user in WebSocket session attributes
     - Reject connection (return false) if token is missing, invalid, or expired
     - _Requirements: 7.1, 7.2, 7.3_
-  - [ ] 10.3 Create `PriceWebSocketHandler` (replaces JSR-356 endpoint)
+  - [x] 10.3 Create `PriceWebSocketHandler` (replaces JSR-356 endpoint)
     - Implement `TextWebSocketHandler` (Spring WebSocket)
     - In `afterConnectionEstablished`: retrieve user from session attributes, query user's distinct symbols, register session in `SessionRegistry`
     - In `afterConnectionClosed`: unregister session from `SessionRegistry`
     - Remove old `PriceWebSocketEndpoint`, `WebSocketServerConfig`, and `WebSocketLifecycleConfig`
     - _Requirements: 6.1, 6.3, 7.3_
-  - [ ] 10.4 Create `WebSocketConfig` (replaces `WebSocketServerConfig`)
+  - [x] 10.4 Create `WebSocketConfig` (replaces `WebSocketServerConfig`)
     - Implement `WebSocketConfigurer` with `registerWebSocketHandlers`
     - Register `PriceWebSocketHandler` at `/ws/prices` with `WebSocketAuthInterceptor`
     - Configure allowed origins from `app.frontend-origin`
     - _Requirements: 7.1_
-  - [ ]* 10.5 Write property test for session registry accuracy (Property 9)
+  - [x] 10.5 Write property test for session registry accuracy (Property 9)
     - **Property 9: Session Registry Accuracy**
     - Generate random sequences of registerSession/unregisterSession/addSymbol/removeSymbol operations, verify the session's symbol set always matches expected state
     - **Validates: Requirements 6.1, 6.3, 6.4, 6.5**
 
-- [ ] 11. Refactor PriceBroadcaster for per-user filtering
-  - [ ] 11.1 Update `PriceBroadcaster` to use `SessionRegistry` for targeted delivery
+- [x] 11. Refactor PriceBroadcaster for per-user filtering
+  - [x] 11.1 Update `PriceBroadcaster` to use `SessionRegistry` for targeted delivery
     - Instead of iterating all sessions, query `SessionRegistry.getSessionsForSymbol(symbol)` to find interested sessions
     - Send the price update only to those sessions
     - If no sessions are interested, discard the update silently
     - Update the `MarketQuoteService` to send quotes only for symbols the connected user holds (use session registry)
     - _Requirements: 6.2, 6.6_
-  - [ ]* 11.2 Write property test for per-user filtering (Property 8)
+  - [x] 11.2 Write property test for per-user filtering (Property 8)
     - **Property 8: Per-User Price Update Filtering**
     - Generate random sessions with random symbol sets, generate a random price update, verify the update is delivered only to sessions whose symbol set includes that symbol
     - **Validates: Requirements 6.2, 6.6**
 
-- [ ] 12. Checkpoint - Verify WebSocket multi-user behavior
+- [x] 12. Checkpoint - Verify WebSocket multi-user behavior
   - Ensure all tests pass, ask the user if questions arise.
   - Verify: WebSocket connections require valid token, sessions receive only their symbols' updates, reference counting increments/decrements correctly.
 
-- [ ] 13. Wire HoldingService to SessionRegistry for live updates
-  - [ ] 13.1 Update `HoldingService` to notify `SessionRegistry` on CRUD operations
+- [x] 13. Wire HoldingService to SessionRegistry for live updates
+  - [x] 13.1 Update `HoldingService` to notify `SessionRegistry` on CRUD operations
     - On `createHolding`: add symbol to user's active sessions via `sessionRegistry.addSymbolToUserSessions(user, ticker)`
     - On `deleteHolding`: remove symbol from user's active sessions (only if user has no other holdings for that ticker) via `sessionRegistry.removeSymbolFromUserSessions(user, ticker)`
     - On `updateHolding` with symbol change: remove old ticker, add new ticker to user sessions

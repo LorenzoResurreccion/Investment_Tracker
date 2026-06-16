@@ -5,6 +5,7 @@ import com.investmenttracker.finnhub.SubscriptionManager;
 import com.investmenttracker.symbol.Symbol;
 import com.investmenttracker.symbol.SymbolRepository;
 import com.investmenttracker.user.User;
+import com.investmenttracker.websocket.SessionRegistry;
 import net.jqwik.api.*;
 import net.jqwik.api.lifecycle.BeforeProperty;
 import org.springframework.security.access.AccessDeniedException;
@@ -35,6 +36,7 @@ class OwnershipEnforcementPropertyTest {
     private SymbolRepository symbolRepository;
     private SubscriptionManager subscriptionManager;
     private FinnhubClient finnhubClient;
+    private SessionRegistry sessionRegistry;
     private HoldingService holdingService;
 
     // In-memory store simulating the database
@@ -52,6 +54,7 @@ class OwnershipEnforcementPropertyTest {
         symbolRepository = mock(SymbolRepository.class);
         subscriptionManager = mock(SubscriptionManager.class);
         finnhubClient = mock(FinnhubClient.class);
+        sessionRegistry = mock(SessionRegistry.class);
 
         // Mock findById: look up from in-memory store
         when(holdingRepository.findById(any(Long.class))).thenAnswer(invocation -> {
@@ -121,7 +124,8 @@ class OwnershipEnforcementPropertyTest {
                 holdingRepository,
                 symbolRepository,
                 subscriptionManager,
-                finnhubClient
+                finnhubClient,
+                sessionRegistry
         );
     }
 

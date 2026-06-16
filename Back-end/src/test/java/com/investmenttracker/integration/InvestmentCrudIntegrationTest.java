@@ -1,7 +1,6 @@
 package com.investmenttracker.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.investmenttracker.config.WebSocketServerConfig;
 import com.investmenttracker.finnhub.FinnhubClient;
 import com.investmenttracker.finnhub.FinnhubReconnectScheduler;
 import com.investmenttracker.investment.InvestmentRequest;
@@ -70,9 +69,6 @@ class InvestmentCrudIntegrationTest {
 
     @MockBean
     private PriceBroadcaster priceBroadcaster;
-
-    @MockBean
-    private WebSocketServerConfig webSocketServerConfig;
 
     /**
      * Tests the full CRUD lifecycle:

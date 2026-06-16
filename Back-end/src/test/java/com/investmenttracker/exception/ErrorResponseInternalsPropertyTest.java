@@ -8,14 +8,19 @@ import net.jqwik.api.*;
 import net.jqwik.api.lifecycle.BeforeProperty;
 import net.jqwik.spring.JqwikSpringSupport;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.investmenttracker.user.UserRepository;
 
 import java.util.Map;
 
@@ -38,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @JqwikSpringSupport
 @WebMvcTest(controllers = ErrorResponseInternalsPropertyTest.ThrowingController.class)
 @Import({GlobalExceptionHandler.class, CorrelationIdInterceptor.class, RequestLoggingInterceptor.class, WebMvcConfig.class})
+@AutoConfigureMockMvc(addFilters = false)
 class ErrorResponseInternalsPropertyTest {
 
     @Autowired
@@ -45,6 +51,12 @@ class ErrorResponseInternalsPropertyTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private JwtDecoder jwtDecoder;
+
+    @MockBean
+    private UserRepository userRepository;
 
     /**
      * A test controller that throws exceptions based on a request parameter.
