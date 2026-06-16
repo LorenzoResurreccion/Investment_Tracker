@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -76,6 +77,18 @@ public class GlobalExceptionHandler {
         String message = "Required parameter '" + ex.getParameterName() + "' is missing";
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(message));
+    }
+
+    /**
+     * Handles access denied errors (e.g. user tries to modify another user's holding).
+     * Returns HTTP 403 with body: {"error": "Forbidden", "message": "Access denied"}
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "Forbidden");
+        body.put("message", "Access denied");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     /**

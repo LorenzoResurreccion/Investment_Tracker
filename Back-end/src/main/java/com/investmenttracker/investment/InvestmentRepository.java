@@ -2,15 +2,21 @@ package com.investmenttracker.investment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.NoRepositoryBean;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Spring Data JPA repository for {@link Investment} entities.
+ * Repository interface for {@link Investment} entities.
+ *
+ * @deprecated Replaced by {@link HoldingRepository} which supports user-scoped queries.
+ *             This interface is retained temporarily for backward-compatible tests that
+ *             mock it directly. It is no longer instantiated by Spring Data JPA since the
+ *             underlying "investments" table was dropped by V3__multi_user_schema.sql.
+ *             The {@code @NoRepositoryBean} annotation prevents Spring from creating a proxy.
  */
-@Repository
+@Deprecated
+@NoRepositoryBean
 public interface InvestmentRepository extends JpaRepository<Investment, Long> {
 
     /**

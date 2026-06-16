@@ -1,53 +1,39 @@
 package com.investmenttracker.investment;
 
-import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
- * JPA entity representing a single investment holding.
+ * Legacy model representing a single investment holding.
  *
- * Each row represents one holding: a symbol + quantity on a specific platform.
- * Multiple rows can share the same symbol (e.g. AAPL on Robinhood and AAPL in a 401k).
- * The subscription layer uses SELECT DISTINCT symbol to determine which
- * symbols need a Finnhub subscription.
+ * Each instance represents one holding: a symbol + quantity on a specific platform.
+ * Multiple instances can share the same symbol (e.g. AAPL on Robinhood and AAPL in a 401k).
  *
- * Maps to the "investments" table created by Flyway migration V1.
+ * Previously mapped to the "investments" table created by Flyway migration V1.
+ * That table was dropped by V3__multi_user_schema.sql.
+ *
+ * @deprecated Replaced by {@link Holding} entity which supports multi-user data isolation.
+ *             This class is retained for backward-compatible tests only and is no longer
+ *             managed by JPA at runtime.
  */
-@Entity
-@Table(name = "investments")
+@Deprecated
 public class Investment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /** Ticker symbol, e.g. {@code AAPL} or {@code BINANCE:BTCUSDT}. */
-    @Column(name = "symbol", nullable = false, length = 20)
     private String symbol;
 
     /** Quantity held for this specific holding. */
-    @Column(name = "quantity", nullable = false, precision = 18, scale = 8)
     private BigDecimal quantity;
 
     /** Optional platform/account label (e.g. "Robinhood", "Coinbase", "401k"). */
-    @Column(name = "platform", length = 100)
     private String platform;
 
     /** Average cost per share (cost basis). Null when unknown. */
-    @Column(name = "average_cost", precision = 18, scale = 8)
     private BigDecimal averageCost;
 
-    @Column(name = "created_at", nullable = false, updatable = false,
-            columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime createdAt;
-
-    /** Sets {@code createdAt} to the current time before the entity is first persisted. */
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = OffsetDateTime.now();
-    }
 
     // --- Getters and setters ---
 

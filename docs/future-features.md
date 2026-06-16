@@ -50,3 +50,17 @@ Re-introduce Apache Kafka as a message broker between the Finnhub price feed and
 This is the right move when transitioning from a single-user personal app to a multi-user platform. The existing `PriceUpdate` DTO and `PriceBroadcaster` are already compatible — the change would add a Kafka producer in `FinnhubClient` and a Kafka consumer that calls `PriceBroadcaster.broadcast()`.
 
 **AWS cost note:** Amazon MSK (Managed Streaming for Kafka) starts at ~$70/month minimum. Only worth adding when the app serves multiple concurrent users.
+
+## 10. Market Status Banner
+
+Display a banner on the dashboard when the US stock market is closed, informing the user that stock prices reflect the last closing value and won't update until market open. Crypto prices continue updating in real-time regardless.
+
+**Approach:**
+- On WebSocket connect, back-end sends `{ type: "marketStatus", isOpen: false }` — front-end shows the banner
+- Back-end polls Finnhub's `/stock/market-status` endpoint every 5 minutes
+- When market opens, back-end sends `{ type: "marketStatus", isOpen: true }` — front-end hides the banner
+- Banner text: "US market closed — stock prices show last close. Crypto updates in real-time."
+
+**Why periodic poll over time-based dismissal:** Finnhub's endpoint accounts for holidays and half-days. A hardcoded schedule would show wrong info on market holidays or early closes. The poll is one lightweight REST call every 5 minutes — negligible cost.
+
+**Prerequisite:** Differentiate the WebSocket message format — currently all messages are `PriceUpdate` objects. Need to add a `type` field or use a wrapper to distinguish status messages from price messages.

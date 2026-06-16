@@ -24,7 +24,9 @@ public record HoldingDetailResponse(
      *
      * @param investment the entity to convert
      * @return the holding detail DTO
+     * @deprecated Use {@link #fromHolding(Holding)} instead for the new multi-user model.
      */
+    @Deprecated
     public static HoldingDetailResponse from(Investment investment) {
         return new HoldingDetailResponse(
                 investment.getId(),
@@ -32,6 +34,23 @@ public record HoldingDetailResponse(
                 investment.getPlatform(),
                 investment.getAverageCost(),
                 investment.getCreatedAt()
+        );
+    }
+
+    /**
+     * Factory method to convert a {@link Holding} entity to a holding detail DTO.
+     * Maintains the same JSON shape as the original Investment-based response.
+     *
+     * @param holding the holding entity to convert
+     * @return the holding detail DTO
+     */
+    public static HoldingDetailResponse fromHolding(Holding holding) {
+        return new HoldingDetailResponse(
+                holding.getId(),
+                holding.getQuantity(),
+                holding.getPlatform(),
+                holding.getAverageCost(),
+                holding.getCreatedAt()
         );
     }
 }

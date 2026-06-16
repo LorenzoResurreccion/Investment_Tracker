@@ -2,12 +2,9 @@ package com.investmenttracker.investment;
 
 import com.investmenttracker.finnhub.FinnhubClient;
 import com.investmenttracker.finnhub.SubscriptionManager;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,8 +21,12 @@ import java.util.stream.Collectors;
  * set always reflects the distinct symbols present in the database.
  *
  * Requirements: 5.1, 5.2, 5.3, 7.1, 7.2, 7.3, 7.4, 7.5
+ *
+ * @deprecated Replaced by {@link HoldingService} which provides user-scoped operations.
+ *             This class is retained temporarily for backward-compatible tests but should
+ *             not be used for new features. It is no longer a Spring bean.
  */
-@Service
+@Deprecated
 public class InvestmentService {
 
     private static final Logger log = LoggerFactory.getLogger(InvestmentService.class);
@@ -51,7 +52,6 @@ public class InvestmentService {
      *
      * Requirements: 5.3
      */
-    @PostConstruct
     public void initSubscriptions() {
         log.info("InvestmentService: initialising subscriptions from database");
         List<String> symbols = investmentRepository.findDistinctSymbols();
@@ -69,7 +69,6 @@ public class InvestmentService {
      *
      * Requirements: 5.1, 7.2
      */
-    @Transactional
     public Investment createInvestment(InvestmentRequest request) {
         Investment investment = new Investment();
         investment.setSymbol(request.getSymbol());
@@ -97,7 +96,6 @@ public class InvestmentService {
      *
      * Requirements: 7.1
      */
-    @Transactional(readOnly = true)
     public List<Investment> getAllInvestments() {
         return investmentRepository.findAll();
     }
@@ -112,7 +110,6 @@ public class InvestmentService {
      *
      * @return list of {@link PortfolioSummaryResponse} entries, one per distinct symbol
      */
-    @Transactional(readOnly = true)
     public List<PortfolioSummaryResponse> getPortfolioSummary() {
         List<Investment> all = investmentRepository.findAll();
         Map<String, List<Investment>> bySymbol = all.stream()
@@ -167,7 +164,6 @@ public class InvestmentService {
      * @param symbol the ticker symbol to look up
      * @return list of {@link Investment} entities for that symbol
      */
-    @Transactional(readOnly = true)
     public List<Investment> getHoldingsBySymbol(String symbol) {
         return investmentRepository.findBySymbol(symbol);
     }
@@ -185,7 +181,6 @@ public class InvestmentService {
      *
      * Requirements: 5.1, 5.2, 7.3, 7.5
      */
-    @Transactional
     public Investment updateInvestment(Long id, InvestmentRequest request) {
         Investment existing = investmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -244,7 +239,6 @@ public class InvestmentService {
      *
      * Requirements: 5.2, 7.4, 7.5
      */
-    @Transactional
     public void deleteInvestment(Long id) {
         Investment investment = investmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(

@@ -1,5 +1,7 @@
 package com.investmenttracker.investment;
 
+import com.investmenttracker.user.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,38 +13,41 @@ import java.util.List;
  * REST controller for Investment CRUD operations.
  *
  * Mapped to /api/investments. Delegates business logic to
- * InvestmentService and maps entities to InvestmentResponse DTOs.
+ * HoldingService, extracting the authenticated User from the request
+ * attribute set by {@code UserResolutionFilter}.
  *
- * Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6
+ * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6
  */
 @RestController
 @RequestMapping("/api/investments")
 public class InvestmentController {
 
-    private final InvestmentService investmentService;
+    private final HoldingService holdingService;
 
-    public InvestmentController(InvestmentService investmentService) {
-        this.investmentService = investmentService;
+    public InvestmentController(HoldingService holdingService) {
+        this.holdingService = holdingService;
     }
 
     /**
-     * Returns all investment records.
+     * Returns all investment records for the authenticated user.
      *
-     * @return HTTP 200 with a JSON array of all investments
+     * @return HTTP 200 with a JSON array of the user's investments
      *
-     * Requirements: 7.1
+     * Requirements: 4.1
      */
     @GetMapping
-    public ResponseEntity<List<InvestmentResponse>> getAllInvestments() {
-        List<InvestmentResponse> responses = investmentService.getAllInvestments()
+    public ResponseEntity<List<InvestmentResponse>> getAllInvestments(HttpServletRequest request) {
+        User user = (User) request.getAttribute("authenticatedUser");
+        List<InvestmentResponse> responses = holdingService.getUserHoldings(user)
                 .stream()
-                .map(InvestmentResponse::from)
+                .map(InvestmentResponse::fromHolding)
                 .toList();
         return ResponseEntity.ok(responses);
     }
 
     /**
-     * Returns a portfolio summary with holdings aggregated by symbol.
+     * Returns a portfolio summary with holdings aggregated by symbol for the
+     * authenticated user.
      *
      * Each entry contains the symbol, total quantity summed across all platforms,
      * and the number of individual holdings for that symbol. This is the primary
@@ -50,15 +55,20 @@ public class InvestmentController {
      * row and instead provides a compact, pre-aggregated view.
      *
      * @return HTTP 200 with a JSON array of portfolio summary entries
+     *
+     * Requirements: 4.1, 4.2
      */
     @GetMapping("/summary")
-    public ResponseEntity<List<PortfolioSummaryResponse>> getPortfolioSummary() {
-        List<PortfolioSummaryResponse> summary = investmentService.getPortfolioSummary();
+    public ResponseEntity<List<PortfolioSummaryResponse>> getPortfolioSummary(
+            HttpServletRequest request) {
+        User user = (User) request.getAttribute("authenticatedUser");
+        List<PortfolioSummaryResponse> summary = holdingService.getPortfolioSummary(user);
         return ResponseEntity.ok(summary);
     }
 
     /**
-     * Returns the per-platform breakdown for a specific symbol.
+     * Returns the per-platform breakdown for a specific symbol belonging to
+     * the authenticated user.
      *
      * Used when the user drills into a symbol from the portfolio summary to see
      * how their holdings are distributed across platforms. Returns an empty array
@@ -66,19 +76,22 @@ public class InvestmentController {
      *
      * @param symbol the ticker symbol to look up (URL-encoded if it contains special chars)
      * @return HTTP 200 with a JSON array of holding details for that symbol
+     *
+     * Requirements: 4.2
      */
     @GetMapping("/symbol/{symbol}")
     public ResponseEntity<List<HoldingDetailResponse>> getHoldingsBySymbol(
-            @PathVariable String symbol) {
-        List<HoldingDetailResponse> holdings = investmentService.getHoldingsBySymbol(symbol)
+            @PathVariable String symbol, HttpServletRequest request) {
+        User user = (User) request.getAttribute("authenticatedUser");
+        List<HoldingDetailResponse> holdings = holdingService.getHoldingsBySymbol(user, symbol)
                 .stream()
-                .map(HoldingDetailResponse::from)
+                .map(HoldingDetailResponse::fromHolding)
                 .toList();
         return ResponseEntity.ok(holdings);
     }
 
     /**
-     * Creates a new investment record.
+     * Creates a new investment record for the authenticated user.
      *
      * The request body is validated with Bean Validation annotations on
      * InvestmentRequest. If validation fails, Spring returns HTTP 400
@@ -87,48 +100,55 @@ public class InvestmentController {
      * @param request the investment data to create
      * @return HTTP 201 with the created investment record
      *
-     * Requirements: 7.2, 7.6
+     * Requirements: 4.3
      */
     @PostMapping
     public ResponseEntity<InvestmentResponse> createInvestment(
-            @Valid @RequestBody InvestmentRequest request) {
-        Investment created = investmentService.createInvestment(request);
+            @Valid @RequestBody InvestmentRequest investmentRequest,
+            HttpServletRequest request) {
+        User user = (User) request.getAttribute("authenticatedUser");
+        Holding created = holdingService.createHolding(user, investmentRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(InvestmentResponse.from(created));
+                .body(InvestmentResponse.fromHolding(created));
     }
 
     /**
-     * Updates an existing investment record (partial update).
+     * Updates an existing investment record (partial update) for the authenticated user.
      *
      * @Valid is not applied here because PUT supports partial updates —
      * only the fields present in the request body are updated. The service layer
-     * handles null fields by leaving them unchanged.
+     * handles null fields by leaving them unchanged. Ownership is verified.
      *
      * @param id      the investment ID to update
-     * @param request the fields to update (null fields are left unchanged)
+     * @param investmentRequest the fields to update (null fields are left unchanged)
      * @return HTTP 200 with the fully updated investment record
      *
-     * Requirements: 7.3, 7.5, 7.6
+     * Requirements: 4.4, 4.5
      */
     @PutMapping("/{id}")
     public ResponseEntity<InvestmentResponse> updateInvestment(
             @PathVariable Long id,
-            @RequestBody InvestmentRequest request) {
-        Investment updated = investmentService.updateInvestment(id, request);
-        return ResponseEntity.ok(InvestmentResponse.from(updated));
+            @RequestBody InvestmentRequest investmentRequest,
+            HttpServletRequest request) {
+        User user = (User) request.getAttribute("authenticatedUser");
+        Holding updated = holdingService.updateHolding(user, id, investmentRequest);
+        return ResponseEntity.ok(InvestmentResponse.fromHolding(updated));
     }
 
     /**
-     * Deletes an investment record.
+     * Deletes an investment record for the authenticated user.
+     * Ownership is verified before deletion.
      *
      * @param id the investment ID to delete
      * @return HTTP 204 (No Content)
      *
-     * Requirements: 7.4, 7.5
+     * Requirements: 4.5, 4.6
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteInvestment(@PathVariable Long id) {
-        investmentService.deleteInvestment(id);
+    public ResponseEntity<Void> deleteInvestment(
+            @PathVariable Long id, HttpServletRequest request) {
+        User user = (User) request.getAttribute("authenticatedUser");
+        holdingService.deleteHolding(user, id);
         return ResponseEntity.noContent().build();
     }
 }
