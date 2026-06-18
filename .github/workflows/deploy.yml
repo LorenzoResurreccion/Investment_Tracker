@@ -1,9 +1,10 @@
 name: Deploy
 
-# Trigger: runs whenever code is pushed to main
+# Trigger: runs whenever code is pushed to main, or manually via workflow_dispatch
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   # ─── Job 1: Run back-end tests ───────────────────────────────────────
