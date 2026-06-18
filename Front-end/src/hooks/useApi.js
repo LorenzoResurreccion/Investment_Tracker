@@ -1,8 +1,6 @@
 import { refreshToken } from './useAuth.js';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-const COGNITO_DOMAIN = import.meta.env.VITE_COGNITO_DOMAIN;
-const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID;
 
 /**
  * Redirects the user to the Cognito Hosted UI login page.
@@ -12,12 +10,15 @@ function redirectToLogin() {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
 
-  if (COGNITO_DOMAIN && CLIENT_ID) {
+  const cognitoDomain = import.meta.env.VITE_COGNITO_DOMAIN;
+  const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
+
+  if (cognitoDomain && clientId) {
     const params = new URLSearchParams({
-      client_id: CLIENT_ID,
+      client_id: clientId,
       logout_uri: window.location.origin,
     });
-    window.location.href = `${COGNITO_DOMAIN}/logout?${params.toString()}`;
+    window.location.href = `${cognitoDomain}/logout?${params.toString()}`;
   } else {
     // Fallback: reload to let the app show login UI
     window.location.href = '/';
