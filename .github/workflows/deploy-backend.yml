@@ -1,0 +1,60 @@
+name: Deploy Back-end
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Back-end/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run tests (skip Docker-dependent integration tests)
+        run: mvn test -Dtest='!*IntegrationTest' -q
+        working-directory: Back-end
+
+  deploy:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build JAR
+        run: mvn package -DskipTests -q
+        working-directory: Back-end
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/lightsail.pem
+          chmod 600 ~/.ssh/lightsail.pem
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload JAR to Lightsail
+        run: |
+          scp -i ~/.ssh/lightsail.pem \
+            Back-end/target/investment-tracker-0.0.1-SNAPSHOT.jar \
+            ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/opt/app/investment-tracker.jar
+
+      - name: Restart service
+        run: |
+          ssh -i ~/.ssh/lightsail.pem \
+            ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} \
+            "sudo systemctl restart investment-tracker"
