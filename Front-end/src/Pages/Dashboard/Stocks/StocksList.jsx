@@ -33,6 +33,14 @@ export default function StocksList({ summary, priceMap, onHoldingChanged, error 
   return (
     <div className="stocks-list">
       <DisplayModeToggle mode={displayMode} onChange={setDisplayMode} />
+      <div className="stocks-list-header">
+        <span className="stocks-list-header-symbol">Symbol</span>
+        <span className="stocks-list-header-quantity">Shares</span>
+        <span className="stocks-list-header-price">Price</span>
+        <span className="stocks-list-header-value">
+          {displayMode === 'profitLoss' ? 'P/L' : 'Value'}
+        </span>
+      </div>
       {summary.map((item) => (
         <div key={item.symbol} className="stocks-list-item">
           <StockRow

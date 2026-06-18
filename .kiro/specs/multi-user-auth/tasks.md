@@ -181,8 +181,8 @@ This plan converts the Investment Tracker from a single-user application to a mu
     - On `updateHolding` with symbol change: remove old ticker, add new ticker to user sessions
     - _Requirements: 6.4, 6.5_
 
-- [ ] 14. Front-end authentication integration
-  - [ ] 14.1 Create `useAuth` hook
+- [x] 14. Front-end authentication integration
+  - [x] 14.1 Create `useAuth` hook
     - Implement Cognito Hosted UI redirect for login (PKCE authorization code flow)
     - Implement authorization code exchange for tokens via Cognito token endpoint
     - Store access_token and refresh_token in localStorage
@@ -191,27 +191,27 @@ This plan converts the Investment Tracker from a single-user application to a mu
     - Add env vars: `VITE_COGNITO_DOMAIN`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_REDIRECT_URI`
     - Update `.env.example` with new front-end variables
     - _Requirements: 3.6_
-  - [ ] 14.2 Update `useApi` hook to attach Bearer token
+  - [x] 14.2 Update `useApi` hook to attach Bearer token
     - Read access_token from localStorage
     - Add `Authorization: Bearer {token}` header to all requests
     - On 401 response: attempt token refresh, retry request on success, redirect to login on failure
     - _Requirements: 3.7_
-  - [ ] 14.3 Update `useWebSocket` hook to pass token as query param
+  - [x] 14.3 Update `useWebSocket` hook to pass token as query param
     - Append `?token={access_token}` to the WebSocket URL
     - On reconnect: use the current token (may have been refreshed)
     - _Requirements: 7.1_
-  - [ ] 14.4 Add login/logout UI and auth callback route
+  - [x] 14.4 Add login/logout UI and auth callback route
     - Create a Login page component shown when user is not authenticated
     - Create an auth callback page that handles the redirect from Cognito (extracts code, exchanges for tokens)
     - Add conditional rendering: show Login page if not authenticated, show app if authenticated
     - Add logout button to navigation
     - _Requirements: 3.6_
-  - [ ]* 14.5 Write property test for front-end token attachment (Property 10)
+  - [x] 14.5 Write property test for front-end token attachment (Property 10)
     - **Property 10: Front-end Token Attachment**
     - Generate random endpoint paths, verify the request function always includes Authorization header when a token exists in storage
     - **Validates: Requirements 3.7**
 
-- [ ] 15. Final checkpoint - End-to-end verification
+- [x] 15. Final checkpoint - End-to-end verification
   - Ensure all tests pass, ask the user if questions arise.
   - Verify: full auth flow works (login → token → API calls → WebSocket), user isolation is enforced, reference counting manages subscriptions correctly, price updates are filtered per-user.
 

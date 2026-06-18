@@ -1,16 +1,19 @@
 # Product: Investment Tracker
 
-A personal investment dashboard that consolidates stocks and crypto holdings in one place, eliminating the need to check multiple apps (Robinhood, Coinbase, Roth IRA, 401k, etc.).
+A multi-user investment dashboard that consolidates stocks and crypto holdings in one place, eliminating the need to check multiple apps (Robinhood, Coinbase, Roth IRA, 401k, etc.).
 
 ## Core Features
-- View all stock and crypto holdings with real-time prices
+- Authenticate via AWS Cognito (OAuth2/PKCE)
+- View all stock and crypto holdings with real-time prices (user-scoped)
 - Portfolio summary at a glance, with per-asset breakdown below
-- Add, edit, or delete individual investments
+- Add, edit, or delete individual investments (ownership enforced)
 - Drill into a specific asset for more detail
-- Optional: group holdings by platform/account
+- Holdings grouped by platform/account
+- Per-user WebSocket price filtering (only receive updates for your symbols)
+- Reference-counted Finnhub subscriptions across all connected users
 
 ## Users
-Single user or small personal use — not a multi-tenant SaaS product at this stage.
+Multi-user with AWS Cognito authentication. Each user's data is fully isolated.
 
 ## Data Flow
-On load, the front-end fetches the user's investment list and available symbols from the back-end. Real-time price updates are pushed via WebSocket.
+On load, the front-end authenticates via Cognito Hosted UI, then fetches the user's holdings and symbols from the back-end (JWT Bearer token on every request). Real-time price updates are pushed via authenticated WebSocket, filtered to only the symbols the connected user holds.

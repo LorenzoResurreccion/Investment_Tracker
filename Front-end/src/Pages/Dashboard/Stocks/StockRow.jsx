@@ -64,6 +64,9 @@ export default function StockRow({
     >
       <span className="stock-row-symbol">{symbol}</span>
       <span className="stock-row-quantity">{formatQuantity(totalQuantity)}</span>
+      <span className="stock-row-price">
+        {hasPrice ? formatCurrency(price) : '…'}
+      </span>
       <span className={getWorthClassName()}>
         {renderValue()}
       </span>

@@ -28,6 +28,13 @@
   font-size: 0.9rem;
 }
 
+.stock-row-price {
+  flex: 1;
+  text-align: right;
+  color: #bbb;
+  font-size: 0.9rem;
+}
+
 .stock-row-worth {
   flex: 1;
   text-align: right;

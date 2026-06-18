@@ -41,8 +41,12 @@ export default function useWebSocket(url, options = {}) {
     // Clean up any existing connection
     if (wsRef.current) {
       intentionalCloseRef.current = true;
-      wsRef.current.close(1000);
+      const existing = wsRef.current;
       wsRef.current = null;
+      // Only close if the socket is actually open or connecting
+      if (existing.readyState === WebSocket.OPEN || existing.readyState === WebSocket.CONNECTING) {
+        existing.close(1000);
+      }
     }
 
     intentionalCloseRef.current = false;
@@ -51,17 +55,28 @@ export default function useWebSocket(url, options = {}) {
   }
 
   function createConnection() {
+    // Don't attempt connection if no token is available
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setStatus('disconnected');
+      return;
+    }
+
     try {
-      const ws = new WebSocket(urlRef.current);
+      const wsUrl = `${urlRef.current}?token=${token}`;
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       setStatus('connecting');
 
       ws.onopen = () => {
+        // Ignore if this socket was already superseded
+        if (wsRef.current !== ws) return;
         attemptRef.current = 0;
         setStatus('connected');
       };
 
       ws.onmessage = (event) => {
+        if (wsRef.current !== ws) return;
         try {
           const data = JSON.parse(event.data);
           setLastMessage(data);
@@ -74,6 +89,8 @@ export default function useWebSocket(url, options = {}) {
       };
 
       ws.onclose = (event) => {
+        // Ignore close events from superseded sockets
+        if (wsRef.current !== ws) return;
         wsRef.current = null;
 
         if (intentionalCloseRef.current || event.code === 1000) {
@@ -128,8 +145,12 @@ export default function useWebSocket(url, options = {}) {
     }
 
     if (wsRef.current) {
-      wsRef.current.close(1000);
+      const ws = wsRef.current;
       wsRef.current = null;
+      // Only attempt close if socket is open or connecting
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close(1000);
+      }
     }
 
     setStatus('disconnected');

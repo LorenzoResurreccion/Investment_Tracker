@@ -5,6 +5,7 @@ import com.investmenttracker.finnhub.SubscriptionManager;
 import com.investmenttracker.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -44,7 +45,7 @@ public class SessionRegistry {
     private final SubscriptionManager subscriptionManager;
     private final FinnhubClient finnhubClient;
 
-    public SessionRegistry(SubscriptionManager subscriptionManager, FinnhubClient finnhubClient) {
+    public SessionRegistry(SubscriptionManager subscriptionManager, @Lazy FinnhubClient finnhubClient) {
         this.subscriptionManager = subscriptionManager;
         this.finnhubClient = finnhubClient;
     }

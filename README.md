@@ -1,17 +1,19 @@
 # Investment Tracker
 
-A personal investment dashboard that consolidates stocks and crypto holdings in one place, eliminating the need to check multiple apps (Robinhood, Coinbase, Roth IRA, 401k, etc.).
+A multi-user investment dashboard that consolidates stocks and crypto holdings in one place, eliminating the need to check multiple apps (Robinhood, Coinbase, Roth IRA, 401k, etc.).
 
 ## Features
 
+- **Multi-user authentication** — AWS Cognito login with OAuth2/PKCE; each user sees only their own data
 - **Real-time portfolio dashboard** — pie chart showing asset allocation (by shares or dollar value), live portfolio value graph, and scrollable holdings list displayed side by side (responsive — stacks on small screens)
 - **Profit/Loss tracking** — toggle between total value and profit/loss display on both the holdings list and the portfolio graph; per-holding P/L computed from average cost basis
 - **Average cost tracking** — record your average cost per share for each holding; editable inline when managing holdings
-- **Live price streaming** — WebSocket connection to Finnhub for real-time price updates with automatic reconnection (infinite retries with exponential backoff, capped at 60s)
+- **Live price streaming** — authenticated WebSocket connection with per-user filtering; you only receive price updates for symbols you hold
 - **After-hours price snapshots** — when the market is closed, the back-end detects this and fetches the last closing price for each holding via Finnhub's REST API, delivering them over the same WebSocket channel so the dashboard displays values immediately without waiting for live trades
-- **Full CRUD** — add, edit, and delete individual investment holdings (including average cost)
+- **Full CRUD** — add, edit, and delete individual investment holdings (including average cost); user ownership enforced server-side
 - **Per-platform breakdown** — expand any stock row to see holdings grouped by platform, with a single "Edit Holdings" button that enables inline editing, deletion, and adding new holdings for that symbol
 - **Multi-asset symbol search** — search US stocks or crypto (Binance) when adding investments via a type selector
+- **Reference-counted subscriptions** — Finnhub WebSocket subscriptions are shared across users; a symbol is subscribed when the first user needs it and unsubscribed when the last user disconnects
 - **Responsive layout** — pie chart and graph sit side by side on wide screens, stack vertically on narrow screens
 - **Responsive loading states** — skeleton UI on initial load, connection indicators for WebSocket status
 
@@ -26,12 +28,13 @@ Investment_Tracker/
 
 ### Front-end
 
-React 19 single-page application built with Vite 8. Uses the React Compiler for automatic memoization.
+React 19 single-page application built with Vite 8. Uses the React Compiler for automatic memoization. Authenticates via AWS Cognito Hosted UI (PKCE flow).
 
 **Key technologies:**
 - React 19 with JSX (no TypeScript)
 - Vite 8 with React Compiler (babel-plugin-react-compiler)
 - Recharts 2.x for pie chart and line chart visualizations
+- AWS Cognito OAuth2/PKCE for authentication
 - Vitest + Testing Library for unit tests
 - fast-check for property-based tests
 
@@ -40,57 +43,65 @@ React 19 single-page application built with Vite 8. Uses the React Compiler for 
 ```
 Front-end/src/
 ├── hooks/
-│   ├── useWebSocket.js        # WebSocket connection with exponential backoff reconnect
-│   └── useApi.js              # REST API fetch wrapper (get/post/put/del)
-├── Pages/Dashboard/
-│   ├── Dashboard.jsx          # Page root — owns state, WebSocket, REST calls
-│   ├── utils.js               # Formatting, computation, validation utilities
-│   ├── Charts/
-│   │   ├── StockPieChart.jsx  # Portfolio allocation pie chart (shares/value toggle)
-│   │   └── PortfolioValueGraph.jsx  # Real-time portfolio value/P&L line chart
-│   ├── Stocks/
-│   │   ├── StocksList.jsx     # Accordion list of all holdings by symbol
-│   │   ├── StockRow.jsx       # Single symbol row (value or P/L display)
-│   │   ├── StockDetailPanel.jsx  # Expanded per-platform holdings with edit/delete
-│   │   ├── DisplayModeToggle.jsx # Reusable toggle for Total Value / Profit/Loss
-│   │   ├── AddStockButton.jsx
-│   │   └── AddStockForm.jsx   # Form with symbol search, validation, averageCost
-│   └── Status/
-│       ├── ConnectionIndicator.jsx  # WebSocket status badge
-│       └── DashboardSkeleton.jsx    # Loading skeleton
-└── App.jsx
+│   ├── useAuth.js             # Cognito login/logout, token management, refresh
+│   ├── useWebSocket.js        # Authenticated WebSocket with exponential backoff
+│   └── useApi.js              # REST API fetch wrapper with Bearer token
+├── Pages/
+│   ├── Dashboard/
+│   │   ├── Dashboard.jsx      # Page root — owns state, WebSocket, REST calls
+│   │   ├── utils.js           # Formatting, computation, validation utilities
+│   │   ├── Charts/
+│   │   │   ├── StockPieChart.jsx  # Portfolio allocation pie chart
+│   │   │   └── PortfolioValueGraph.jsx  # Real-time portfolio value/P&L chart
+│   │   ├── Stocks/
+│   │   │   ├── StocksList.jsx     # Accordion list of all holdings by symbol
+│   │   │   ├── StockRow.jsx       # Single symbol row
+│   │   │   ├── StockDetailPanel.jsx  # Per-platform holdings
+│   │   │   ├── DisplayModeToggle.jsx # Total Value / Profit/Loss toggle
+│   │   │   ├── AddStockButton.jsx
+│   │   │   └── AddStockForm.jsx
+│   │   └── Status/
+│   │       ├── ConnectionIndicator.jsx  # WebSocket status badge
+│   │       └── DashboardSkeleton.jsx    # Loading skeleton
+│   ├── Login/Login.jsx        # Login page (unauthenticated state)
+│   └── AuthCallback.jsx       # Cognito redirect handler
+└── App.jsx                    # Routes + auth guard
 ```
 
 ### Back-end
 
-Spring Boot application providing REST APIs and real-time price streaming.
+Spring Boot application providing REST APIs and real-time price streaming with JWT-based authentication.
 
 **Key technologies:**
-- Java + Spring Boot
-- WebSocket (native `/ws/prices` endpoint for price streaming)
+- Java 21 + Spring Boot 3.3
+- Spring Security OAuth2 Resource Server (Cognito JWT validation)
+- PostgreSQL with Flyway migrations
+- WebSocket (Spring `TextWebSocketHandler` for authenticated price streaming)
 - Finnhub API (stock/crypto market data source)
 
 **Modules:**
-- `investment/` — CRUD endpoints for user holdings (`/api/investments`)
-- `symbol/` — Symbol search endpoint (`/api/symbols/search`) with support for stocks, ETFs, and crypto
-- `finnhub/` — Finnhub WebSocket client with reconnect scheduling (created via `FinnhubConfig`, not `@Component`)
-- `websocket/` — Server-side WebSocket for pushing prices to clients + PriceBroadcaster
-- `config/` — CORS, WebSocket, Finnhub, and request logging configuration
+- `auth/` — User resolution filter (JWT → User entity auto-provisioning)
+- `user/` — User entity and repository
+- `symbol/` — Symbol entity, repository, and search endpoint (`/api/symbols/search`)
+- `investment/` — Holdings CRUD with user-scoped access (`/api/investments`)
+- `finnhub/` — Finnhub WebSocket client with reference-counted SubscriptionManager
+- `websocket/` — SessionRegistry, PriceWebSocketHandler, PriceBroadcaster (per-user filtering)
+- `config/` — Security, CORS, WebSocket, Finnhub, and request logging configuration
 
-**REST API endpoints:**
+**REST API endpoints** (all under `/api/` require Bearer token):
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/investments/summary` | Portfolio summary (symbol, totalQuantity, holdingCount, weightedAverageCost) |
-| GET | `/api/investments/symbol/{symbol}` | Per-platform holdings for a symbol |
-| POST | `/api/investments` | Create a new holding (with optional averageCost) |
-| PUT | `/api/investments/{id}` | Update a holding (quantity, platform, averageCost) |
-| DELETE | `/api/investments/{id}` | Delete a holding |
+| GET | `/api/investments/summary` | Portfolio summary for authenticated user |
+| GET | `/api/investments/symbol/{symbol}` | Per-platform holdings for a symbol (user-scoped) |
+| POST | `/api/investments` | Create a new holding for authenticated user |
+| PUT | `/api/investments/{id}` | Update a holding (ownership verified) |
+| DELETE | `/api/investments/{id}` | Delete a holding (ownership verified) |
 | GET | `/api/symbols/search?q=...&type=...` | Search symbols (type: stock, crypto, etf) |
 
-**WebSocket endpoint:**
+**WebSocket endpoint** (requires `?token={jwt}` query param):
 | Endpoint | Direction | Message |
 |----------|-----------|---------|
-| `/ws/prices` | Server → Client | `{ symbol, price, timestamp }` |
+| `/ws/prices` | Server → Client | `{ symbol, price, timestamp }` (filtered to user's symbols) |
 
 ## Running the App
 
@@ -196,6 +207,8 @@ All sensitive configuration lives in `.env` files (gitignored). Copy the `.env.e
 | `DATABASE_PASSWORD` | (empty for Homebrew Postgres) | Yes |
 | `SERVER_PORT` | `8080` | No (defaults to 8080) |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | No (defaults to this) |
+| `AWS_REGION` | `us-east-1` | Yes |
+| `COGNITO_USER_POOL_ID` | `us-east-1_xxxxxxxxx` | Yes |
 
 Set `FINNHUB_ENABLED=false` to run the back-end without connecting to Finnhub (useful for testing REST endpoints without live market data).
 
@@ -205,8 +218,9 @@ Set `FINNHUB_ENABLED=false` to run the back-end without connecting to Finnhub (u
 |----------|---------|----------|
 | `VITE_API_BASE_URL` | `/api` | No (defaults to `/api`) |
 | `VITE_WS_URL` | `ws://localhost:8080/ws/prices` | No (auto-detected) |
-
-Front-end env vars are optional — defaults work out of the box for local development.
+| `VITE_COGNITO_DOMAIN` | `https://your-app.auth.us-east-1.amazoncognito.com` | Yes |
+| `VITE_COGNITO_CLIENT_ID` | `1abc2def3ghi...` | Yes |
+| `VITE_COGNITO_REDIRECT_URI` | `http://localhost:5173/auth/callback` | Yes |
 
 ### Available Scripts (Front-end)
 
@@ -255,13 +269,23 @@ Two layers of tests (JUnit 5 + jqwik):
 **Unit tests** — service logic, controller behavior, exception handling.
 
 **Property-based tests** (jqwik) — verify invariants across randomized inputs:
-1. Average cost round-trip persistence
-2. Negative average cost rejection
-3. Weighted average cost computation
-4. Investment CRUD round-trip
-5. Partial update field isolation
-6. Price update serialization round-trip
-7. Error response internals never exposed
+1. User resolution consistency (same sub → same user)
+2. Auto-provisioning correctness (new sub → new user, idempotent)
+3. User data isolation (no cross-user data leakage)
+4. Ownership enforcement (cross-user mutations rejected with 403)
+5. Reference count invariant (count matches active sessions)
+6. Subscribe on first interest (0→1 transition triggers subscribe)
+7. Unsubscribe on last interest (1→0 transition triggers unsubscribe)
+8. Per-user price update filtering (updates only to interested sessions)
+9. Session registry accuracy (session symbol set matches user holdings)
+10. Average cost round-trip persistence
+11. Negative average cost rejection
+12. Weighted average cost computation
+13. Investment request validation
+14. Price update serialization round-trip
+15. Error response internals never exposed
+16. Log entry field completeness
+17. Symbol search result cap
 
 Run back-end tests:
 
@@ -279,13 +303,17 @@ mvn test
 
 ## Design Decisions
 
-- **No global state library** — React state + props are sufficient for a single-page, single-user app
+- **AWS Cognito for auth** — managed identity provider with Hosted UI; no password storage in our DB
+- **JWT validation via JWKS** — stateless authentication; back-end fetches Cognito's public keys (cached) without needing IAM permissions
+- **User auto-provisioning** — first valid JWT from a new user creates their record automatically; no separate registration step
+- **Reference-counted Finnhub subscriptions** — `ConcurrentHashMap<String, AtomicInteger>` tracks how many sessions need each symbol; subscribe on 0→1, unsubscribe on 1→0
+- **Per-user WebSocket filtering** — `SessionRegistry` maps sessions to symbol sets; price updates are sent only to relevant sessions
+- **Normalized schema** — separate `symbols`, `users`, and `holdings` tables with composite unique constraint on (user_id, symbol_id, platform)
 - **React Compiler** — handles memoization automatically, no manual `useMemo`/`useCallback`
 - **Recharts 2.x** — declarative SVG-based charting, React 19 compatible
 - **Co-located CSS** — each component has its own `.css` file alongside it
 - **Summary-only fetch on mount** — full holdings are only fetched when a stock row is expanded
 - **Single WebSocket connection** — owned by Dashboard, price map shared via props to children
-- **No Kafka** — removed for simplicity; Finnhub prices are broadcast directly to browser WebSocket clients via `PriceBroadcaster`. Kafka can be re-introduced for multi-user scaling (see `docs/future-features.md`)
 - **FinnhubClient as @Bean** — created via `FinnhubConfig` (not `@Component`) to avoid CGLIB proxy issues with the `WebSocketClient` superclass
 - **Pie chart dual mode** — toggles between share count and dollar value allocation; defaults to shares so it works without live price data
 - **P/L computed client-side** — back-end provides averageCost, front-end computes P/L using real-time prices from the WebSocket feed

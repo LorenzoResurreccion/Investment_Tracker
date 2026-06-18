@@ -19,27 +19,8 @@ public record HoldingDetailResponse(
 ) {
 
     /**
-     * Factory method to convert an {@link Investment} entity to a holding detail DTO.
-     * Omits the symbol field since the caller already knows which symbol they queried.
-     *
-     * @param investment the entity to convert
-     * @return the holding detail DTO
-     * @deprecated Use {@link #fromHolding(Holding)} instead for the new multi-user model.
-     */
-    @Deprecated
-    public static HoldingDetailResponse from(Investment investment) {
-        return new HoldingDetailResponse(
-                investment.getId(),
-                investment.getQuantity(),
-                investment.getPlatform(),
-                investment.getAverageCost(),
-                investment.getCreatedAt()
-        );
-    }
-
-    /**
      * Factory method to convert a {@link Holding} entity to a holding detail DTO.
-     * Maintains the same JSON shape as the original Investment-based response.
+     * Omits the symbol field since the caller already knows which symbol they queried.
      *
      * @param holding the holding entity to convert
      * @return the holding detail DTO

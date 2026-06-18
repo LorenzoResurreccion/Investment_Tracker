@@ -30,3 +30,34 @@
 .stocks-list-item:last-child {
   border-bottom: none;
 }
+
+.stocks-list-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #333;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #777;
+}
+
+.stocks-list-header-symbol {
+  flex: 1;
+}
+
+.stocks-list-header-quantity {
+  flex: 1;
+  text-align: right;
+}
+
+.stocks-list-header-price {
+  flex: 1;
+  text-align: right;
+}
+
+.stocks-list-header-value {
+  flex: 1;
+  text-align: right;
+}

@@ -14,14 +14,14 @@ Investment_Tracker/
 ```
 Front-end/
 ├── src/
-│   ├── App.jsx           # Root component and app entry point
+│   ├── App.jsx           # Root component, routing, and auth guard
 │   ├── App.css           # Root-level styles
 │   ├── main.jsx          # React DOM bootstrap (StrictMode)
 │   ├── index.css         # Global styles
-│   ├── hooks/            # Custom hooks (useApi, useWebSocket)
+│   ├── hooks/            # Custom hooks (useAuth, useApi, useWebSocket)
 │   ├── Nav/              # Navigation components
-│   ├── Pages/            # Page-level components (one per route/view)
-│   └── assets/           # Static assets (images, SVGs)
+│   ├── Pages/            # Page-level components (Dashboard, Login, AuthCallback)
+│   └── assets/           # Static assets (images)
 ├── public/               # Files served as-is (favicon, icons)
 ├── index.html            # Vite HTML entry point
 ├── vite.config.js        # Vite + Babel/React Compiler config
@@ -38,16 +38,18 @@ Back-end/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/investmenttracker/
-│   │   │   ├── config/          # CORS, WebSocket, Finnhub, logging, startup validation
+│   │   │   ├── auth/            # UserResolutionFilter (JWT → User entity)
+│   │   │   ├── config/          # Security, CORS, WebSocket, Finnhub, logging
 │   │   │   ├── dto/             # Shared DTOs (PriceUpdate)
 │   │   │   ├── exception/       # Global exception handler + error response
-│   │   │   ├── finnhub/         # Finnhub WebSocket client + reconnect scheduler
-│   │   │   ├── investment/      # Investment CRUD (entity, controller, service, repo)
-│   │   │   ├── symbol/          # Symbol search service
-│   │   │   └── websocket/       # Server-side WebSocket for price streaming
+│   │   │   ├── finnhub/         # Finnhub WebSocket client + SubscriptionManager
+│   │   │   ├── investment/      # Holdings CRUD (entity, controller, service, repo)
+│   │   │   ├── symbol/          # Symbol entity, repository, search service
+│   │   │   ├── user/            # User entity + repository
+│   │   │   └── websocket/       # SessionRegistry, PriceWebSocketHandler, PriceBroadcaster
 │   │   └── resources/
 │   │       ├── application.properties   # Config (references env vars via ${})
-│   │       └── db/migration/            # Flyway SQL migrations
+│   │       └── db/migration/            # Flyway SQL migrations (V1–V3)
 │   └── test/                    # Unit tests (JUnit), property tests (jqwik), integration tests (Testcontainers)
 ├── .env                         # Local secrets (gitignored)
 ├── .env.example                 # Template for required env vars (committed)
