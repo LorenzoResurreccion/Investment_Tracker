@@ -86,15 +86,18 @@ The back-end exposes three levels of investment data. The front-end should fetch
 ## Data Flow Summary
 
 ```
-Dashboard (page load)
-  └── GET /api/investments/summary
-  └── WebSocket /ws/prices (live price updates)
+Portfolio tab (page load / tab switch)
+  └── GET /api/investments/summary (fetched at App level)
+  └── WebSocket /ws/prices (live price updates, connected at App level)
 
-User clicks "AAPL"
+User clicks "AAPL" (expands a stock row)
   └── GET /api/investments/symbol/AAPL
 
-User navigates to "All Holdings" / "Export"
-  └── GET /api/investments
+User navigates to Settings → "Export CSV"
+  └── GET /api/investments/export
+
+User navigates to Analytics → "Generate Insights"
+  └── POST /api/analytics/insights
 ```
 
 ## CRUD Operations
@@ -115,7 +118,7 @@ The WebSocket at `/ws/prices` pushes `PriceUpdate` messages:
 { "symbol": "AAPL", "price": 182.34, "timestamp": "2024-01-15T14:30:00.123Z" }
 ```
 
-- Connect on dashboard mount, disconnect on unmount
+- Connected at the App level (shared across all tabs), disconnected on logout
 - Match incoming updates to the summary list by symbol
 - Multiply `price × totalQuantity` to show live portfolio value per symbol
 - No need to refetch REST data when a price update arrives — just update the displayed price

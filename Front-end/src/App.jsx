@@ -1,5 +1,5 @@
 import './App.css';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import useAuth from './hooks/useAuth.js';
 import useApi from './hooks/useApi.js';
@@ -41,12 +41,6 @@ function AuthenticatedApp({ onLogout }) {
   const [priceMap, setPriceMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const summaryRef = useRef(summary);
-
-  useEffect(() => {
-    summaryRef.current = summary;
-  }, [summary]);
 
   // WebSocket message handler — updates priceMap
   function handlePriceUpdate(message) {
@@ -161,8 +155,6 @@ function AuthenticatedApp({ onLogout }) {
             path="/settings"
             element={
               <SettingsTab
-                summary={summary}
-                priceMap={priceMap}
                 onLogout={onLogout}
               />
             }

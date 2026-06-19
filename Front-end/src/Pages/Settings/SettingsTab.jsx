@@ -3,7 +3,7 @@ import CsvExportSection from './CsvExportSection.jsx';
 import AccountDeletionSection from './AccountDeletionSection.jsx';
 import './SettingsTab.css';
 
-export default function SettingsTab({ summary, priceMap, onLogout }) {
+export default function SettingsTab({ onLogout }) {
   return (
     <div className="settings-tab">
       <h1 className="settings-tab__heading">Settings</h1>

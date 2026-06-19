@@ -2,9 +2,12 @@
 
 ## Front-end
 - **Framework**: React 19 with JSX
+- **Routing**: react-router-dom v7 (BrowserRouter, NavLink, Routes)
 - **Build Tool**: Vite 8
 - **Compiler**: React Compiler (via `babel-plugin-react-compiler` + `@rolldown/plugin-babel`)
+- **Charting**: Recharts 2.x (pie chart, line chart)
 - **Linting**: ESLint 10 with `eslint-plugin-react-hooks` and `eslint-plugin-react-refresh`
+- **Testing**: Vitest 4 + Testing Library + fast-check (property-based)
 - **Language**: JavaScript (`.js` / `.jsx`) — no TypeScript, though `@types/react` is installed
 
 ## Back-end
@@ -12,10 +15,14 @@
 - **Database**: PostgreSQL with Flyway migrations
 - **WebSocket**: Finnhub client for real-time market data + server-side `/ws/prices` endpoint
 - **REST API**: Symbol search and investment CRUD at `/api/investments`
+- **AI**: AWS Bedrock (Claude Haiku) for portfolio insights at `/api/analytics/insights`
+- **Export**: CSV export at `/api/investments/export`
+- **Testing**: JUnit 5 + jqwik (property-based) + Testcontainers (integration)
 - **Environment**: `.env` files loaded via spring-dotenv (never committed)
 
 ## External APIs
 - **Finnhub** (`https://finnhub.io/api/v1`) — stock symbol lookup and market data
+- **AWS Bedrock** — AI model invocation for portfolio insights
 
 ## Common Commands
 
@@ -33,7 +40,8 @@ Run from `Back-end/`:
 
 ```bash
 mvn package -DskipTests -q   # Build JAR
-mvn test                      # Run all tests (JUnit + jqwik PBT)
+mvn test -Dtest='!*IntegrationTest'  # Run unit + property tests (skip Docker-dependent tests)
+mvn test                              # Run all tests including integration (requires Docker)
 ```
 
 ## Notes
