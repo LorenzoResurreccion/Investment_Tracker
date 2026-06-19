@@ -7,11 +7,15 @@
   gap: 1rem;
 }
 
-.portfolio-tab__chart {
+.portfolio-tab__charts {
   width: 100%;
   display: flex;
-  justify-content: center;
-  overflow: hidden;
+  gap: 1rem;
+}
+
+.portfolio-tab__chart {
+  flex: 1;
+  min-width: 0;
 }
 
 .portfolio-tab__add-stock {
@@ -22,4 +26,10 @@
 
 .portfolio-tab__holdings {
   width: 100%;
+}
+
+@media (max-width: 768px) {
+  .portfolio-tab__charts {
+    flex-direction: column;
+  }
 }

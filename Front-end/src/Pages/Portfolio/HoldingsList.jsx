@@ -4,6 +4,11 @@ import StockDetailPanel from '../Dashboard/Stocks/StockDetailPanel.jsx';
 import { sortHoldings } from './sortHoldings.js';
 import './HoldingsList.css';
 
+const DISPLAY_MODE_OPTIONS = [
+  { value: 'totalValue', label: 'Total Value' },
+  { value: 'profitLoss', label: 'Profit/Loss' },
+];
+
 const SORT_OPTIONS = [
   { value: 'symbol', label: 'Symbol' },
   { value: 'shares', label: 'Shares' },
@@ -16,6 +21,7 @@ export default function HoldingsList({ summary, priceMap, onHoldingChanged }) {
   const [sortField, setSortField] = useState('symbol');
   const [sortDirection, setSortDirection] = useState('asc');
   const [expandedSymbol, setExpandedSymbol] = useState(null);
+  const [displayMode, setDisplayMode] = useState('totalValue');
 
   function handleToggle(symbol) {
     setExpandedSymbol((current) => (current === symbol ? null : symbol));
@@ -27,6 +33,10 @@ export default function HoldingsList({ summary, priceMap, onHoldingChanged }) {
 
   function handleDirectionToggle() {
     setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+  }
+
+  function handleDisplayModeChange(e) {
+    setDisplayMode(e.target.value);
   }
 
   if (!summary || summary.length === 0) {
@@ -65,13 +75,30 @@ export default function HoldingsList({ summary, priceMap, onHoldingChanged }) {
         >
           {sortDirection === 'asc' ? '↑' : '↓'}
         </button>
+        <div className="holdings-list-mode-group">
+          <label className="holdings-list-mode-label" htmlFor="holdings-mode-select">
+            Mode
+          </label>
+          <select
+            id="holdings-mode-select"
+            className="holdings-list-mode-select"
+            value={displayMode}
+            onChange={handleDisplayModeChange}
+          >
+            {DISPLAY_MODE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="holdings-list-header">
         <span className="holdings-list-header-symbol">Symbol</span>
         <span className="holdings-list-header-quantity">Shares</span>
         <span className="holdings-list-header-price">Price</span>
-        <span className="holdings-list-header-value">Value</span>
+        <span className="holdings-list-header-value">{displayMode === 'totalValue' ? 'Value' : 'P/L'}</span>
       </div>
 
       {sortedSummary.map((item) => (
@@ -83,7 +110,7 @@ export default function HoldingsList({ summary, priceMap, onHoldingChanged }) {
             isExpanded={expandedSymbol === item.symbol}
             onToggle={() => handleToggle(item.symbol)}
             onHoldingChanged={onHoldingChanged}
-            displayMode="totalValue"
+            displayMode={displayMode}
             weightedAverageCost={item.weightedAverageCost}
           />
           {expandedSymbol === item.symbol && (

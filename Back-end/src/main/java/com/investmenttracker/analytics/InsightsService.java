@@ -42,10 +42,11 @@ public class InsightsService {
 
     private static final String SYSTEM_PROMPT = """
             You are a portfolio analyst. Given the user's holdings, provide a structured analysis \
-            with exactly three sections:
-            1. ALLOCATION: Analyze the portfolio's diversification and concentration.
-            2. RISK: Assess risk factors including sector concentration and volatility exposure.
-            3. SUGGESTIONS: Provide 2-3 actionable, general suggestions for portfolio improvement.
+            with exactly three sections. Output ONLY plain text with these exact section headers on their own lines:
+            ALLOCATION:
+            RISK:
+            SUGGESTIONS:
+            Do not use markdown formatting (no #, **, or bullet points). \
             Keep each section concise (2-4 sentences). Do not provide specific buy/sell recommendations or price targets.""";
 
     private final HoldingService holdingService;
@@ -60,6 +61,7 @@ public class InsightsService {
 
     private BedrockRuntimeClient bedrockClient;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public InsightsService(HoldingService holdingService, ObjectMapper objectMapper) {
         this.holdingService = holdingService;
         this.objectMapper = objectMapper;
@@ -117,7 +119,13 @@ public class InsightsService {
                 .body(SdkBytes.fromUtf8String(requestBody))
                 .build();
 
-        InvokeModelResponse response = bedrockClient.invokeModel(request);
+        InvokeModelResponse response;
+        try {
+            response = bedrockClient.invokeModel(request);
+        } catch (Exception e) {
+            log.error("InsightsService: Bedrock invocation failed for user='{}'", user.getUsername(), e);
+            throw new BedrockInvocationException("Bedrock invocation failed: " + e.getMessage(), e);
+        }
 
         String responseText = extractResponseText(response);
         InsightsResponse insights = parseResponse(responseText);
@@ -243,7 +251,30 @@ public class InsightsService {
             allocation = text.trim();
         }
 
+        // Strip markdown formatting (headers, bold, numbered prefixes)
+        allocation = stripMarkdown(allocation);
+        risk = stripMarkdown(risk);
+        suggestions = stripMarkdown(suggestions);
+
         return new InsightsResponse(allocation, risk, suggestions, Instant.now());
+    }
+
+    /**
+     * Strips common markdown formatting from text.
+     * Removes # headers, ** bold, leading numbers/bullets, and excess whitespace.
+     */
+    private String stripMarkdown(String text) {
+        if (text == null || text.isEmpty()) return text;
+        // Remove markdown header lines (e.g., "## Risk Assessment")
+        String result = text.replaceAll("(?m)^#{1,6}\\s+.*$", "").trim();
+        // Remove bold markers
+        result = result.replace("**", "");
+        // Remove leading bullet/number markers (e.g., "1. " or "- ")
+        result = result.replaceAll("(?m)^\\d+\\.\\s+", "");
+        result = result.replaceAll("(?m)^[-*]\\s+", "");
+        // Collapse multiple newlines into single space for clean paragraph display
+        result = result.replaceAll("\\n{2,}", "\n").trim();
+        return result;
     }
 
     /**

@@ -65,3 +65,33 @@
     opacity: 0.4;
   }
 }
+
+/* ─── Responsive: narrow viewports ─── */
+
+@media (max-width: 480px) {
+  .stock-row {
+    padding: 12px 12px;
+  }
+
+  .stock-row-symbol {
+    flex: 2;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stock-row-quantity {
+    display: none;
+  }
+
+  .stock-row-price {
+    flex: 1;
+    font-size: 0.85rem;
+  }
+
+  .stock-row-worth {
+    flex: 1;
+    text-align: right;
+  }
+}

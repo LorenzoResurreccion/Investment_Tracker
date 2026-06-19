@@ -67,6 +67,40 @@
   outline-offset: 1px;
 }
 
+.holdings-list-display-toggle {
+  margin-left: auto;
+}
+
+.holdings-list-mode-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.holdings-list-mode-group {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.holdings-list-mode-select {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #eee;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.holdings-list-mode-select:focus {
+  outline: 2px solid #5c6bc0;
+  outline-offset: 1px;
+}
+
 .holdings-list-header {
   display: flex;
   align-items: center;
@@ -104,4 +138,35 @@
 
 .holdings-list-item:last-child {
   border-bottom: none;
+}
+
+/* ─── Responsive: narrow viewports ─── */
+
+@media (max-width: 480px) {
+  .holdings-list-controls {
+    flex-wrap: wrap;
+  }
+
+  .holdings-list-mode-group {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .holdings-list-header-quantity {
+    display: none;
+  }
+
+  .holdings-list-header-symbol {
+    flex: 2;
+  }
+
+  .holdings-list-header-price {
+    flex: 1;
+    text-align: right;
+  }
+
+  .holdings-list-header-value {
+    flex: 1;
+    text-align: right;
+  }
 }

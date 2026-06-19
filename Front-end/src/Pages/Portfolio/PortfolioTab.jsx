@@ -22,8 +22,13 @@ export default function PortfolioTab({ summary, priceMap, onHoldingChanged }) {
 
   return (
     <div className="portfolio-tab">
-      <section className="portfolio-tab__chart">
-        <StockPieChart summary={summary} priceMap={priceMap} />
+      <section className="portfolio-tab__charts">
+        <div className="portfolio-tab__chart">
+          <StockPieChart summary={summary} priceMap={priceMap} mode="shares" title="Shares" />
+        </div>
+        <div className="portfolio-tab__chart">
+          <StockPieChart summary={summary} priceMap={priceMap} mode="value" title="Value" />
+        </div>
       </section>
 
       <section className="portfolio-tab__add-stock">

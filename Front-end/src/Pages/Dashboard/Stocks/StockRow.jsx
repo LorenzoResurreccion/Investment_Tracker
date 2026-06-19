@@ -1,6 +1,16 @@
 import { formatQuantity, formatCurrency, computeProfitLoss } from '../utils.js';
 import './StockRow.css';
 
+/**
+ * Returns the short display name for a symbol.
+ * For exchange-prefixed symbols like "BINANCE:BTCUSD", returns just "BTCUSD".
+ * For plain symbols like "AAPL", returns them unchanged.
+ */
+function shortSymbol(symbol) {
+  const colonIndex = symbol.indexOf(':');
+  return colonIndex !== -1 ? symbol.substring(colonIndex + 1) : symbol;
+}
+
 export default function StockRow({
   symbol,
   totalQuantity,
@@ -62,7 +72,7 @@ export default function StockRow({
       }}
       aria-expanded={isExpanded}
     >
-      <span className="stock-row-symbol">{symbol}</span>
+      <span className="stock-row-symbol" title={symbol}>{shortSymbol(symbol)}</span>
       <span className="stock-row-quantity">{formatQuantity(totalQuantity)}</span>
       <span className="stock-row-price">
         {hasPrice ? formatCurrency(price) : '…'}

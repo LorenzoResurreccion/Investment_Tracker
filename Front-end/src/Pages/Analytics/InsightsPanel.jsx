@@ -2,13 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import useApi from '../../hooks/useApi.js';
 import './InsightsPanel.css';
 
+// Persist insights across tab switches (module-level cache)
+let cachedResponse = null;
+let cachedCooldownEnd = 0;
+
 // eslint-disable-next-line no-unused-vars
 export default function InsightsPanel({ summary, priceMap }) {
   const { post } = useApi();
-  const [response, setResponse] = useState(null);
+  const [response, setResponse] = useState(cachedResponse);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [cooldownEnd, setCooldownEnd] = useState(0);
+  const [cooldownEnd, setCooldownEnd] = useState(cachedCooldownEnd);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const intervalRef = useRef(null);
 
@@ -57,9 +61,10 @@ export default function InsightsPanel({ summary, priceMap }) {
     const { data, error: apiError, status } = await post('/analytics/insights');
 
     if (status === 429) {
-      // Use retryAfterSeconds from response body
       const retryAfter = data?.retryAfterSeconds ?? 60;
-      setCooldownEnd(Date.now() + retryAfter * 1000);
+      const end = Date.now() + retryAfter * 1000;
+      setCooldownEnd(end);
+      cachedCooldownEnd = end;
       setError(null);
       setLoading(false);
       return;
@@ -72,8 +77,10 @@ export default function InsightsPanel({ summary, priceMap }) {
     }
 
     setResponse(data);
-    // Set cooldown after a successful request (60 seconds)
-    setCooldownEnd(Date.now() + 60 * 1000);
+    cachedResponse = data;
+    const end = Date.now() + 60 * 1000;
+    setCooldownEnd(end);
+    cachedCooldownEnd = end;
     setLoading(false);
   }
 

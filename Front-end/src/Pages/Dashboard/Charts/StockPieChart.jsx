@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
 import './StockPieChart.css';
 
@@ -7,6 +6,11 @@ const COLORS = [
   '#59a14f', '#edc948', '#b07aa1', '#ff9da7',
   '#9c755f', '#bab0ac',
 ];
+
+function shortSymbol(symbol) {
+  const colonIndex = symbol.indexOf(':');
+  return colonIndex !== -1 ? symbol.substring(colonIndex + 1) : symbol;
+}
 
 function renderLegend({ payload }) {
   return (
@@ -26,9 +30,12 @@ function renderLegend({ payload }) {
   );
 }
 
-export default function StockPieChart({ summary, priceMap }) {
-  const [mode, setMode] = useState('shares');
-
+/**
+ * Pie chart showing portfolio allocation.
+ *
+ * @param {{ summary: Array, priceMap: Object, mode: 'shares' | 'value', title?: string }} props
+ */
+export default function StockPieChart({ summary, priceMap, mode = 'shares', title }) {
   if (!summary || summary.length === 0) {
     return (
       <div className="stock-pie-chart stock-pie-chart--empty">
@@ -42,54 +49,35 @@ export default function StockPieChart({ summary, priceMap }) {
   let slices;
 
   if (mode === 'value') {
-    // Dollar value mode: quantity × current price per symbol
     const valueSlices = summary
       .map((item) => {
         const price = priceMap instanceof Map ? priceMap.get(item.symbol) : priceMap?.[item.symbol];
         const dollarValue = price != null ? item.totalQuantity * price : 0;
         return { symbol: item.symbol, value: dollarValue };
-      })
-      .filter((s) => s.value > 0);
+      });
 
     const totalValue = valueSlices.reduce((sum, s) => sum + s.value, 0);
 
     slices = valueSlices.map((s) => ({
       ...s,
+      name: shortSymbol(s.symbol),
       percentage: totalValue > 0 ? (s.value / totalValue) * 100 : 0,
     }));
   } else {
-    // Shares mode: raw quantity per symbol
     const totalQuantity = summary.reduce((sum, item) => sum + item.totalQuantity, 0);
 
     slices = summary.map((item) => ({
       symbol: item.symbol,
+      name: shortSymbol(item.symbol),
       value: item.totalQuantity,
       percentage: totalQuantity > 0 ? (item.totalQuantity / totalQuantity) * 100 : 0,
     }));
   }
 
-  // If value mode has no priced symbols, show a message
   if (mode === 'value' && slices.length === 0) {
     return (
       <div className="stock-pie-chart">
-        <div className="pie-chart-toggle" role="radiogroup" aria-label="Pie chart mode">
-          <button
-            role="radio"
-            aria-checked={mode === 'shares'}
-            className={`pie-chart-toggle__btn ${mode === 'shares' ? 'pie-chart-toggle__btn--active' : ''}`}
-            onClick={() => setMode('shares')}
-          >
-            Shares
-          </button>
-          <button
-            role="radio"
-            aria-checked={mode === 'value'}
-            className={`pie-chart-toggle__btn ${mode === 'value' ? 'pie-chart-toggle__btn--active' : ''}`}
-            onClick={() => setMode('value')}
-          >
-            Value
-          </button>
-        </div>
+        {title && <h3 className="stock-pie-chart__title">{title}</h3>}
         <p className="stock-pie-chart-empty-message">
           Waiting for price data…
         </p>
@@ -99,30 +87,13 @@ export default function StockPieChart({ summary, priceMap }) {
 
   return (
     <div className="stock-pie-chart">
-      <div className="pie-chart-toggle" role="radiogroup" aria-label="Pie chart mode">
-        <button
-          role="radio"
-          aria-checked={mode === 'shares'}
-          className={`pie-chart-toggle__btn ${mode === 'shares' ? 'pie-chart-toggle__btn--active' : ''}`}
-          onClick={() => setMode('shares')}
-        >
-          Shares
-        </button>
-        <button
-          role="radio"
-          aria-checked={mode === 'value'}
-          className={`pie-chart-toggle__btn ${mode === 'value' ? 'pie-chart-toggle__btn--active' : ''}`}
-          onClick={() => setMode('value')}
-        >
-          Value
-        </button>
-      </div>
-      <ResponsiveContainer width="100%" height={350}>
+      {title && <h3 className="stock-pie-chart__title">{title}</h3>}
+      <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
             data={slices}
             dataKey="value"
-            nameKey="symbol"
+            nameKey="name"
             cx="50%"
             cy="45%"
             outerRadius="80%"
