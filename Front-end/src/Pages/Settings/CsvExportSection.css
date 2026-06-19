@@ -1,0 +1,38 @@
+.csv-export-section {
+  margin-bottom: 2rem;
+}
+
+.csv-export-section__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.csv-export-section__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.csv-export-section__label {
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.csv-export-section__btn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  background: #4a9eff;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.csv-export-section__btn:hover {
+  background: #3a8eef;
+}

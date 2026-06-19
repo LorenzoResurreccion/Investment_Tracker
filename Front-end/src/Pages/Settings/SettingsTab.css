@@ -1,0 +1,30 @@
+.settings-tab {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.settings-tab__heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.settings-tab__placeholder {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px dashed #444;
+  border-radius: 8px;
+  color: #888;
+}
+
+.settings-tab__placeholder h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #aaa;
+}
+
+.settings-tab__placeholder p {
+  font-size: 0.9rem;
+}

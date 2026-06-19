@@ -1,0 +1,52 @@
+.preferences-section {
+  margin-bottom: 2rem;
+}
+
+.preferences-section__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.preferences-section__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.preferences-section__label {
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.preferences-section__toggle {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+
+.preferences-section__toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #2a2a2a;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.preferences-section__toggle-btn:hover {
+  background: #333;
+}
+
+.preferences-section__toggle-btn--active {
+  background: #4a9eff;
+  color: #fff;
+}
+
+.preferences-section__toggle-btn--active:hover {
+  background: #3a8eef;
+}

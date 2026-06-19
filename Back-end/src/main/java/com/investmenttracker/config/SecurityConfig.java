@@ -1,6 +1,7 @@
 package com.investmenttracker.config;
 
 import com.investmenttracker.auth.UserResolutionFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -55,6 +58,7 @@ public class SecurityConfig {
                 .anyRequest().permitAll()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
+                .bearerTokenResolver(bearerTokenResolver())
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter()))
             )
             .addFilterAfter(userResolutionFilter, BearerTokenAuthenticationFilter.class);
@@ -67,7 +71,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(frontendOrigin));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setExposedHeaders(List.of("Authorization", "Retry-After"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -79,5 +83,23 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setPrincipalClaimName("sub");
         return converter;
+    }
+
+    /**
+     * Custom BearerTokenResolver that first checks the standard Authorization header,
+     * then falls back to a "token" query parameter. This supports browser-based
+     * downloads (window.open) where headers cannot be set.
+     */
+    private BearerTokenResolver bearerTokenResolver() {
+        DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
+        return (HttpServletRequest request) -> {
+            // First try the standard Authorization header
+            String token = defaultResolver.resolve(request);
+            if (token != null) {
+                return token;
+            }
+            // Fall back to "token" query parameter (for CSV export via window.open)
+            return request.getParameter("token");
+        };
     }
 }

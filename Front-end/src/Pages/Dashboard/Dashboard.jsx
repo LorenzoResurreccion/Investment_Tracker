@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import useApi from '../../hooks/useApi.js';
-import useWebSocket from '../../hooks/useWebSocket.js';
 import { computeTotalValue, computeTotalProfitLoss, appendDataPoint } from './utils.js';
 import StockPieChart from './Charts/StockPieChart.jsx';
 import PortfolioValueGraph from './Charts/PortfolioValueGraph.jsx';
@@ -8,24 +6,12 @@ import StocksList from './Stocks/StocksList.jsx';
 import AddStockButton from './Stocks/AddStockButton.jsx';
 import AddStockForm from './Stocks/AddStockForm.jsx';
 import ConnectionIndicator from './Status/ConnectionIndicator.jsx';
-import DashboardSkeleton from './Status/DashboardSkeleton.jsx';
 import './Dashboard.css';
 
-const WS_URL = import.meta.env.VITE_WS_URL
-  || (import.meta.env.DEV
-    ? 'ws://localhost:8080/ws/prices'
-    : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/prices`);
-const FETCH_TIMEOUT_MS = 10000;
 const MAX_DATA_POINTS = 50;
 
-export default function Dashboard() {
-  const api = useApi();
-
-  const [summary, setSummary] = useState([]);
-  const [priceMap, setPriceMap] = useState({});
+export default function Dashboard({ summary, priceMap, wsStatus, onHoldingChanged }) {
   const [dataPoints, setDataPoints] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [addFormOpen, setAddFormOpen] = useState(false);
   const [graphDisplayMode, setGraphDisplayMode] = useState('totalValue');
 
@@ -69,82 +55,28 @@ export default function Dashboard() {
     }
   }, [graphDisplayMode]);
 
-  // WebSocket message handler
-  function handlePriceUpdate(message) {
-    if (!message || !message.symbol || message.price == null) return;
+  // Append data points when priceMap updates from WebSocket.
+  // This intentionally derives accumulated graph state from prop changes.
+  const prevPriceMapRef = useRef(priceMap);
+  useEffect(() => {
+    // Skip the initial mount (no actual price change yet)
+    if (prevPriceMapRef.current === priceMap) return;
+    prevPriceMapRef.current = priceMap;
 
-    const { symbol, price, timestamp } = message;
+    if (summary.length === 0 || Object.keys(priceMap).length === 0) return;
 
-    setPriceMap((prev) => ({ ...prev, [symbol]: price }));
-
-    // Compute new data point using updated price map
-    const updatedPriceMap = { ...priceMapRef.current, [symbol]: price };
     const currentMode = graphDisplayModeRef.current;
-
     let newValue;
     if (currentMode === 'profitLoss') {
-      newValue = computeTotalProfitLoss(summaryRef.current, updatedPriceMap);
+      newValue = computeTotalProfitLoss(summary, priceMap);
     } else {
-      newValue = computeTotalValue(summaryRef.current, updatedPriceMap);
+      newValue = computeTotalValue(summary, priceMap);
     }
 
-    const timeLabel = timestamp
-      ? new Date(timestamp).toLocaleTimeString()
-      : new Date().toLocaleTimeString();
-
+    const timeLabel = new Date().toLocaleTimeString();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDataPoints((prev) => appendDataPoint(prev, { time: timeLabel, value: newValue }, MAX_DATA_POINTS));
-  }
-
-  // WebSocket connection
-  const { status: wsConnectionStatus } = useWebSocket(WS_URL, {
-    onMessage: handlePriceUpdate,
-    reconnect: true,
-    maxAttempts: 10,
-  });
-
-  // Initial data fetch with timeout
-  useEffect(() => {
-    fetchSummary();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function fetchSummary() {
-    setLoading(true);
-    setError(null);
-
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-      setError('Request timed out. Please try again.');
-    }, FETCH_TIMEOUT_MS);
-
-    api.get('/investments/summary').then((result) => {
-      clearTimeout(timeoutId);
-
-      // If error was already set by timeout, don't overwrite
-      if (!result) return;
-
-      setLoading(false);
-
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setSummary(result.data || []);
-        setError(null);
-      }
-    });
-  }
-
-  function handleRetry() {
-    fetchSummary();
-  }
-
-  function handleHoldingChanged() {
-    // Refetch summary after any CRUD operation
-    api.get('/investments/summary').then((result) => {
-      if (result && !result.error) {
-        setSummary(result.data || []);
-      }
-    });
-  }
+  }, [priceMap, summary]);
 
   function handleAddFormOpen() {
     setAddFormOpen(true);
@@ -155,26 +87,7 @@ export default function Dashboard() {
   }
 
   function handleStockCreated() {
-    handleHoldingChanged();
-  }
-
-  // Loading state — show skeleton
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
-
-  // Error state — full-page error with retry
-  if (error) {
-    return (
-      <div className="dashboard dashboard--error">
-        <div className="dashboard-error">
-          <p className="dashboard-error__message">{error}</p>
-          <button className="dashboard-error__retry" onClick={handleRetry}>
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+    onHoldingChanged();
   }
 
   // Compute current total for the graph based on display mode
@@ -187,7 +100,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-      <ConnectionIndicator status={wsConnectionStatus} />
+      <ConnectionIndicator status={wsStatus} />
 
       <section className="dashboard__charts">
         <div className="dashboard__pie-chart">
@@ -213,7 +126,7 @@ export default function Dashboard() {
         <StocksList
           summary={summary}
           priceMap={priceMap}
-          onHoldingChanged={handleHoldingChanged}
+          onHoldingChanged={onHoldingChanged}
         />
       </section>
 

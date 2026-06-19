@@ -23,6 +23,7 @@
         <jqwik.version>1.9.1</jqwik.version>
         <jqwik-spring.version>0.12.0</jqwik-spring.version>
         <testcontainers.version>1.21.0</testcontainers.version>
+        <aws-sdk.version>2.29.20</aws-sdk.version>
     </properties>
 
     <dependencies>
@@ -72,6 +73,13 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- AWS SDK — Bedrock Runtime (AI insights) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>bedrockruntime</artifactId>
+            <version>${aws-sdk.version}</version>
         </dependency>
 
         <!-- JSON -->

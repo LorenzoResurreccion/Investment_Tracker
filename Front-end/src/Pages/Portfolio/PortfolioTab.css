@@ -1,0 +1,25 @@
+.portfolio-tab {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.portfolio-tab__chart {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.portfolio-tab__add-stock {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.portfolio-tab__holdings {
+  width: 100%;
+}

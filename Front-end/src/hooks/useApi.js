@@ -65,13 +65,18 @@ async function request(endpoint, options = {}, isRetry = false) {
 
     if (!response.ok) {
       let error;
+      let data = null;
       try {
         const body = await response.json();
         error = body.message || body.error || `Request failed with status ${status}`;
+        // Preserve body data for rate-limited responses so callers can read retryAfterSeconds
+        if (status === 429) {
+          data = body;
+        }
       } catch {
         error = `Request failed with status ${status}`;
       }
-      return { data: null, error, status };
+      return { data, error, status };
     }
 
     // Handle 204 No Content

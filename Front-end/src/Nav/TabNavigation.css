@@ -1,0 +1,106 @@
+.tab-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-navigation-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.tab-navigation-link {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-navigation-link:hover {
+  color: var(--text-h);
+}
+
+.tab-navigation-link--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-navigation-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+.tab-navigation-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tab-navigation-status {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tab-navigation-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.tab-navigation-dot--connected {
+  background: #22c55e;
+}
+
+.tab-navigation-dot--connecting,
+.tab-navigation-dot--reconnecting {
+  background: #f59e0b;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.tab-navigation-dot--disconnected {
+  background: #6b7280;
+}
+
+.tab-navigation-dot--failed {
+  background: #ef4444;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.tab-navigation-logout {
+  padding: 0.4rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.tab-navigation-logout:hover {
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.tab-navigation-logout:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

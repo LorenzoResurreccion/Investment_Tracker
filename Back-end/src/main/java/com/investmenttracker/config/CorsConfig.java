@@ -31,6 +31,6 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(frontendOrigin)
                 .allowedMethods("*")
                 .allowedHeaders("Content-Type", "Authorization")
-                .exposedHeaders("Authorization");
+                .exposedHeaders("Authorization", "Retry-After");
     }
 }

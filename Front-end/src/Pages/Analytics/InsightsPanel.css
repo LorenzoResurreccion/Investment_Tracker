@@ -1,0 +1,103 @@
+.insights-panel {
+  background: var(--color-surface, #1e1e2e);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border, #2e2e3e);
+}
+
+.insights-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.insights-panel__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text, #e0e0e0);
+}
+
+.insights-panel__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary, #6c63ff);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.insights-panel__button:hover:not(:disabled) {
+  background: var(--color-primary-hover, #5a52e0);
+}
+
+.insights-panel__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.insights-panel__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: insights-spin 0.6s linear infinite;
+}
+
+@keyframes insights-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.insights-panel__error {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 80, 80, 0.1);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  border-radius: 8px;
+  color: #ff5050;
+  font-size: 0.85rem;
+}
+
+.insights-panel__results {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.insights-panel__section {
+  padding: 1rem;
+  background: var(--color-surface-alt, #262637);
+  border-radius: 8px;
+  border: 1px solid var(--color-border, #2e2e3e);
+}
+
+.insights-panel__section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primary, #6c63ff);
+  margin-bottom: 0.5rem;
+}
+
+.insights-panel__section-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text, #e0e0e0);
+  white-space: pre-wrap;
+}
+
+.insights-panel__cooldown {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #888);
+}

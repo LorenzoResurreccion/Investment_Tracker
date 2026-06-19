@@ -1,0 +1,132 @@
+.account-deletion-section {
+  margin-bottom: 2rem;
+}
+
+.account-deletion-section__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.account-deletion-section__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.account-deletion-section__label {
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.account-deletion-section__delete-btn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  background: #e74c3c;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.account-deletion-section__delete-btn:hover {
+  background: #c0392b;
+}
+
+/* Modal overlay */
+.account-deletion-section__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.account-deletion-section__modal {
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1.75rem;
+  max-width: 420px;
+  width: 90%;
+}
+
+.account-deletion-section__modal-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.account-deletion-section__modal-warning {
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.account-deletion-section__modal-error {
+  font-size: 0.85rem;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.account-deletion-section__modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.account-deletion-section__cancel-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.account-deletion-section__cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #777;
+}
+
+.account-deletion-section__cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.account-deletion-section__confirm-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #e74c3c;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.account-deletion-section__confirm-btn:hover {
+  background: #c0392b;
+}
+
+.account-deletion-section__confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #a93226;
+}

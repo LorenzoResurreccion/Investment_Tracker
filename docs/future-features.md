@@ -1,44 +1,38 @@
 # Future Features — Portfolio Dashboard UI
 
-Ideas identified during requirements review that are out of scope for v1 but worth revisiting.
+Ideas identified during requirements review that are out of scope for the current phase but worth revisiting.
 
-## 1. Platform Pie Chart
+## 1. AI Chat Interface
 
-A pie chart showing portfolio allocation grouped by platform (Robinhood, Coinbase, 401k, etc.) with a color-coded legend. Requires fetching the full holdings list (`GET /api/investments`) since the summary endpoint doesn't include platform info. Holdings with null/empty platform would be grouped as "Unspecified".
+Full conversational AI where users ask follow-up questions about their portfolio ("what if I sold my AAPL?", "compare my returns to S&P 500 this year"). Would be its own dedicated tab if usage warrants it.
 
-**Prerequisite:** Decide whether to fetch full holdings on dashboard load (conflicts with data-fetching steering doc) or add a dedicated platform-summary endpoint to the back-end.
+**Prerequisite:** Initial AI insights feature (being built now as part of Analytics tab) proves value.
 
-## 2. Gain/Loss Display (P&L)
+## 2. Historical Performance Chart
 
-Show unrealized profit/loss per stock and for the total portfolio — dollar amount and percentage, color-coded green/red. This is the single most impactful addition for a portfolio watcher.
+Extend the analytics tab with a historical portfolio value view (1D, 1W, 1M, 1Y) using stored daily snapshots. Requires a scheduled job to record portfolio value daily and new database tables.
 
-**Prerequisite:** Add a `purchasePrice` (cost basis) field to the `Investment` entity and expose it through the REST API.
+**Prerequisite:** Daily snapshot infrastructure (cron job + `portfolio_snapshots` table).
 
-## 3. Sorting & Filtering the Stocks List
+## 3. Advanced Analytics
 
-Allow users to sort holdings by value, name, gain%, or quantity. Optionally filter by platform.
+- Sector/industry breakdown chart
+- Performance vs. benchmarks (S&P 500)
+- Concentration risk analysis
+- Dividend tracking
 
-## 4. Dark Mode / Theming
-
-Finance apps commonly offer a dark theme. Could be a simple CSS variable toggle or a full theme system.
-
-## 5. Price Alerts & Notifications
+## 4. Price Alerts & Notifications
 
 Let users set thresholds (e.g., "notify me if AAPL drops below $150") and surface alerts in the UI or via push notifications.
 
-## 6. Historical Performance Chart
+## 5. Additional Settings Options
 
-Extend the real-time graph with a historical view (1D, 1W, 1M, 1Y) using stored price snapshots or an external historical data API.
+- Notification preferences (price alerts, daily summaries)
+- Platform labels management (rename or merge platforms)
+- Hide zero-quantity holdings toggle
+- Multi-currency support (display in preferred currency)
 
-## 7. Multi-Currency Support
-
-Display values in the user's preferred currency, converting where needed.
-
-## 8. Export / Reporting
-
-Allow exporting portfolio data as CSV or PDF for tax reporting or record-keeping.
-
-## 9. Kafka Message Broker (Multi-User Scaling)
+## 6. Kafka Message Broker (Multi-User Scaling)
 
 Re-introduce Apache Kafka as a message broker between the Finnhub price feed and WebSocket clients. Currently, the FinnhubClient broadcasts prices directly to connected browser sessions via `PriceBroadcaster`. Adding Kafka back would enable:
 
@@ -47,20 +41,16 @@ Re-introduce Apache Kafka as a message broker between the Finnhub price feed and
 - **Horizontal scaling** — multiple back-end instances can each consume from Kafka independently, enabling load balancing across many concurrent users
 - **Decoupled failure** — if the WebSocket broadcaster is slow or down, prices are buffered in Kafka rather than lost
 
-This is the right move when transitioning from a single-user personal app to a multi-user platform. The existing `PriceUpdate` DTO and `PriceBroadcaster` are already compatible — the change would add a Kafka producer in `FinnhubClient` and a Kafka consumer that calls `PriceBroadcaster.broadcast()`.
-
 **AWS cost note:** Amazon MSK (Managed Streaming for Kafka) starts at ~$70/month minimum. Only worth adding when the app serves multiple concurrent users.
 
-## 10. Market Status Banner
+## 7. Market Status Banner
 
 Display a banner on the dashboard when the US stock market is closed, informing the user that stock prices reflect the last closing value and won't update until market open. Crypto prices continue updating in real-time regardless.
 
-**Approach:**
-- On WebSocket connect, back-end sends `{ type: "marketStatus", isOpen: false }` — front-end shows the banner
-- Back-end polls Finnhub's `/stock/market-status` endpoint every 5 minutes
-- When market opens, back-end sends `{ type: "marketStatus", isOpen: true }` — front-end hides the banner
-- Banner text: "US market closed — stock prices show last close. Crypto updates in real-time."
+## 8. Platform Pie Chart
 
-**Why periodic poll over time-based dismissal:** Finnhub's endpoint accounts for holidays and half-days. A hardcoded schedule would show wrong info on market holidays or early closes. The poll is one lightweight REST call every 5 minutes — negligible cost.
+A pie chart showing portfolio allocation grouped by platform (Robinhood, Coinbase, 401k, etc.).
 
-**Prerequisite:** Differentiate the WebSocket message format — currently all messages are `PriceUpdate` objects. Need to add a `type` field or use a wrapper to distinguish status messages from price messages.
+## 9. Export as PDF
+
+Generate formatted PDF portfolio reports for tax reporting or record-keeping (CSV export is being built now).
